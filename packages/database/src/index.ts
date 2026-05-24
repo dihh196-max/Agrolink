@@ -6,6 +6,8 @@ import * as postsSchema from './schema/posts.js'
 import * as marketSchema from './schema/market.js'
 import * as aiSchema from './schema/ai.js'
 import * as socialSchema from './schema/social.js'
+import * as jobsSchema from './schema/jobs.js'
+import * as marketplaceSchema from './schema/marketplace.js'
 
 export const schema = {
   ...usersSchema,
@@ -14,6 +16,8 @@ export const schema = {
   ...marketSchema,
   ...aiSchema,
   ...socialSchema,
+  ...jobsSchema,
+  ...marketplaceSchema,
 }
 
 export type Database = ReturnType<typeof createDatabase>
@@ -29,3 +33,5 @@ export * from './schema/posts.js'
 export * from './schema/market.js'
 export * from './schema/ai.js'
 export * from './schema/social.js'
+export * from './schema/jobs.js'
+export * from './schema/marketplace.js'

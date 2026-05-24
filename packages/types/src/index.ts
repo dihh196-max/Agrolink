@@ -299,6 +299,8 @@ export interface SearchResults {
   posts: Post[]
   news: NewsArticle[]
   offers: Offer[]
+  jobs: Job[]
+  products: MarketplaceProduct[]
 }
 
 // ─── Groups ───────────────────────────────────────────────────────────────────
@@ -328,6 +330,71 @@ export interface NewsArticle {
   sourceName: string
   imageUrl?: string
   publishedAt: string
+}
+
+// ─── Vagas de Emprego ─────────────────────────────────────────────────────────
+
+export type JobType = 'seasonal' | 'permanent' | 'internship' | 'service'
+export type JobApplicationStatus = 'pending' | 'accepted' | 'rejected'
+
+export interface Job {
+  id: string
+  userId: string
+  poster: Pick<User, 'id' | 'name' | 'username' | 'avatarUrl' | 'role'>
+  title: string
+  description: string
+  type: JobType
+  culture?: Culture
+  salaryMin?: number
+  salaryMax?: number
+  city: string
+  state: string
+  latitude?: number
+  longitude?: number
+  distanceKm?: number
+  deadline?: string
+  active: boolean
+  createdAt: string
+}
+
+export interface JobApplication {
+  id: string
+  jobId: string
+  userId: string
+  message?: string
+  status: JobApplicationStatus
+  createdAt: string
+}
+
+// ─── Marketplace ──────────────────────────────────────────────────────────────
+
+export type ProductCategory =
+  | 'seeds'
+  | 'fertilizers'
+  | 'pesticides'
+  | 'equipment'
+  | 'animals'
+  | 'grains'
+  | 'other'
+
+export interface MarketplaceProduct {
+  id: string
+  userId: string
+  seller: Pick<User, 'id' | 'name' | 'username' | 'avatarUrl' | 'role'>
+  name: string
+  description: string
+  category: ProductCategory
+  price: number
+  unit: string
+  images: string[]
+  stock?: number
+  city: string
+  state: string
+  latitude?: number
+  longitude?: number
+  distanceKm?: number
+  active: boolean
+  createdAt: string
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────

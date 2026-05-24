@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { Logo } from '../../components/Logo'
 import {
   Search,
   Bell,
@@ -13,6 +14,9 @@ import {
   Building2,
   User,
   Package,
+  Briefcase,
+  ShoppingBag,
+  Navigation,
 } from 'lucide-react'
 import {
   useDemoAuth,
@@ -57,6 +61,8 @@ const TABS = [
   { id: 'news', label: 'Notícias' },
   { id: 'posts', label: 'Posts' },
   { id: 'offers', label: 'Ofertas' },
+  { id: 'jobs', label: 'Vagas' },
+  { id: 'products', label: 'Produtos' },
 ]
 
 export default function RedePage() {
@@ -65,8 +71,10 @@ export default function RedePage() {
   const [tab, setTab] = useState('all')
   const [activeThread, setActiveThread] = useState<string | null>(null)
   const [msgInput, setMsgInput] = useState('')
+  const [geo, setGeo] = useState<{ lat?: number; lng?: number }>({})
+  const [geoLoading, setGeoLoading] = useState(false)
 
-  const { data: search, isLoading: searching } = useSearch(query, tab, ready)
+  const { data: search, isLoading: searching } = useSearch(query, tab, ready, geo)
   const { data: notifications } = useNotifications()
   const markAll = useMarkAllRead()
   const { data: threads } = useThreads()
@@ -77,6 +85,17 @@ export default function RedePage() {
 
   const unread = notifications?.filter((n: any) => !n.read).length ?? 0
   const show = (k: string) => tab === 'all' || tab === k
+
+  const enableGeo = () => {
+    setGeoLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setGeoLoading(false)
+      },
+      () => setGeoLoading(false)
+    )
+  }
 
   const handleSend = () => {
     const c = msgInput.trim()
@@ -95,11 +114,12 @@ export default function RedePage() {
       {/* Top bar */}
       <header className="bg-primary text-white px-6 py-3 flex items-center justify-between sticky top-0 z-30">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <span className="text-2xl">🌱</span>
-          <span className="text-xl font-bold">AgroLink</span>
-          <span className="bg-white/20 text-xs px-2 py-1 rounded-full ml-2">Rede</span>
+          <Logo size={30} />
+          <span className="bg-white/20 text-xs px-2 py-1 rounded-full">Rede</span>
         </Link>
         <div className="flex gap-4 text-sm items-center">
+          <Link href="/vagas" className="opacity-80 hover:opacity-100">Vagas</Link>
+          <Link href="/marketplace" className="opacity-80 hover:opacity-100">Marketplace</Link>
           <Link href="/dashboard" className="opacity-80 hover:opacity-100">Dashboard</Link>
           <div className="relative">
             <Bell size={20} />
@@ -116,14 +136,29 @@ export default function RedePage() {
         {/* ── Coluna principal: BUSCA ── */}
         <div className="lg:col-span-2 space-y-4">
           <div className="card">
-            <div className="flex items-center gap-3 border-2 border-gray-200 rounded-full px-4 py-2 focus-within:border-primary transition-colors">
-              <Search size={20} className="text-gray-400" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar pessoas, empresas, notícias, posts e ofertas..."
-                className="flex-1 outline-none text-gray-800"
-              />
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center gap-3 border-2 border-gray-200 rounded-full px-4 py-2 focus-within:border-primary transition-colors">
+                <Search size={20} className="text-gray-400" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar pessoas, vagas, produtos, notícias..."
+                  className="flex-1 outline-none text-gray-800"
+                />
+              </div>
+              <button
+                onClick={enableGeo}
+                disabled={geoLoading}
+                title="Buscar perto de mim"
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                  geo.lat != null
+                    ? 'border-primary bg-green-50 text-primary'
+                    : 'border-gray-200 text-gray-500 hover:border-primary hover:text-primary'
+                }`}
+              >
+                <Navigation size={16} />
+                {geo.lat != null ? 'Geo ativo' : 'Perto de mim'}
+              </button>
             </div>
             <div className="flex gap-2 mt-3 flex-wrap">
               {TABS.map((t) => (
@@ -256,7 +291,7 @@ export default function RedePage() {
               {/* Ofertas */}
               {show('offers') && search?.offers?.length > 0 && (
                 <div className="card">
-                  <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2"><Package size={16} /> Ofertas</h3>
+                  <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2"><Package size={16} /> Ofertas de Grãos</h3>
                   <div className="space-y-2">
                     {search.offers.map((o: any) => (
                       <div key={o.id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
@@ -271,6 +306,51 @@ export default function RedePage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Vagas */}
+              {show('jobs') && search?.jobs?.length > 0 && (
+                <div className="card">
+                  <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2"><Briefcase size={16} /> Vagas de Emprego</h3>
+                  <div className="space-y-3">
+                    {search.jobs.map((j: any) => (
+                      <div key={j.id} className="border-b border-gray-100 pb-3 last:border-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="font-semibold text-gray-800">{j.title}</div>
+                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                            {j.type === 'seasonal' ? 'Safra' : j.type === 'permanent' ? 'Efetivo' : j.type === 'service' ? 'Serviço' : 'Estágio'}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-500 mt-0.5">{j.city}/{j.state} {j.distanceKm != null && `· ${j.distanceKm} km`}</div>
+                        {j.salaryMin != null && (
+                          <div className="text-sm font-medium text-primary mt-0.5">
+                            R$ {j.salaryMin.toLocaleString('pt-BR')}{j.salaryMax ? `–${j.salaryMax.toLocaleString('pt-BR')}` : ''}/mês
+                          </div>
+                        )}
+                        <Link href="/vagas" className="text-xs text-primary hover:underline mt-1 inline-block">Ver vaga completa →</Link>
+                      </div>
+                    ))}
+                  </div>
+                  <Link href="/vagas" className="text-sm text-primary hover:underline block mt-2">Ver todas as vagas →</Link>
+                </div>
+              )}
+
+              {/* Marketplace */}
+              {show('products') && search?.products?.length > 0 && (
+                <div className="card">
+                  <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2"><ShoppingBag size={16} /> Marketplace</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {search.products.map((p: any) => (
+                      <div key={p.id} className="border border-gray-100 rounded-lg p-3">
+                        <div className="font-semibold text-gray-800 text-sm">{p.name}</div>
+                        <div className="text-xs text-gray-400 mt-0.5">{p.city}/{p.state} {p.distanceKm != null && `· ${p.distanceKm} km`}</div>
+                        <div className="text-primary font-bold mt-1">R$ {p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div className="text-xs text-gray-400">por {p.unit}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <Link href="/marketplace" className="text-sm text-primary hover:underline block mt-3">Ver todo o Marketplace →</Link>
                 </div>
               )}
             </div>

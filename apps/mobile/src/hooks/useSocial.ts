@@ -6,6 +6,8 @@ import type {
   DirectMessage,
   Notification,
   PartnerProfile,
+  Job,
+  MarketplaceProduct,
 } from '@agrolink/types'
 
 // ─── Busca ────────────────────────────────────────────────────────────────────
@@ -107,5 +109,44 @@ export function useMarkAllRead() {
   return useMutation({
     mutationFn: () => api.patch('/notifications/read-all').then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+}
+
+// ─── Vagas de Emprego ─────────────────────────────────────────────────────────
+export function useJobs(typeFilter?: string, geo?: { lat: number; lng: number }) {
+  return useQuery<Job[]>({
+    queryKey: ['jobs', typeFilter, geo?.lat, geo?.lng],
+    queryFn: () =>
+      api
+        .get('/jobs', {
+          params: {
+            ...(typeFilter && typeFilter !== 'all' && { type: typeFilter }),
+            ...(geo && { lat: geo.lat, lng: geo.lng, radius: 300 }),
+          },
+        })
+        .then((r) => r.data),
+  })
+}
+
+export function useApplyJob() {
+  return useMutation({
+    mutationFn: ({ jobId, message }: { jobId: string; message?: string }) =>
+      api.post(`/jobs/${jobId}/apply`, { message }).then((r) => r.data),
+  })
+}
+
+// ─── Marketplace ──────────────────────────────────────────────────────────────
+export function useMarketplace(category?: string, geo?: { lat: number; lng: number }) {
+  return useQuery<MarketplaceProduct[]>({
+    queryKey: ['marketplace', category, geo?.lat, geo?.lng],
+    queryFn: () =>
+      api
+        .get('/marketplace', {
+          params: {
+            ...(category && category !== 'all' && { category }),
+            ...(geo && { lat: geo.lat, lng: geo.lng, radius: 400 }),
+          },
+        })
+        .then((r) => r.data),
   })
 }

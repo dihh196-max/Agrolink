@@ -52,10 +52,17 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="offers"
+        name="vagas"
         options={{
-          title: 'Ofertas',
-          tabBarIcon: ({ color }) => <TabBarIcon name="swap-horizontal-outline" color={color} />,
+          title: 'Vagas',
+          tabBarIcon: ({ color }) => <TabBarIcon name="briefcase-outline" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="marketplace"
+        options={{
+          title: 'Loja',
+          tabBarIcon: ({ color }) => <TabBarIcon name="storefront-outline" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -68,6 +75,7 @@ export default function TabsLayout() {
       {/* Reached via header icons, hidden from tab bar */}
       <Tabs.Screen name="search" options={{ href: null }} />
       <Tabs.Screen name="messages" options={{ href: null }} />
+      <Tabs.Screen name="offers" options={{ href: null }} />
     </Tabs>
   )
 }

@@ -26,10 +26,19 @@ export function useDemoAuth() {
   return ready
 }
 
-export function useSearch(query: string, type = 'all', enabled = true) {
+export function useSearch(query: string, type = 'all', enabled = true, geo?: { lat?: number; lng?: number }) {
   return useQuery({
-    queryKey: ['search', query, type],
-    queryFn: () => api.get('/search', { params: { q: query, type } }).then((r) => r.data),
+    queryKey: ['search', query, type, geo?.lat, geo?.lng],
+    queryFn: () =>
+      api
+        .get('/search', {
+          params: {
+            q: query,
+            type,
+            ...(geo?.lat != null && { lat: geo.lat, lng: geo.lng, radius: 200 }),
+          },
+        })
+        .then((r) => r.data),
     enabled: enabled && query.trim().length >= 2,
   })
 }

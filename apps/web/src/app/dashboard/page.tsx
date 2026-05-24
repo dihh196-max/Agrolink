@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { TrendingUp, TrendingDown, Leaf, CloudSun, ShoppingCart, MessageCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Leaf, CloudSun, ShoppingCart, MessageCircle, Briefcase, ShoppingBag } from 'lucide-react'
 
 // Mock data for dashboard preview (no auth required)
 const MOCK_PRICES = [
@@ -79,13 +79,16 @@ export default function DashboardPage() {
       {/* Top bar */}
       <header className="bg-primary text-white px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🌱</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="AgroLink" width={32} height={32} className="rounded-full" />
           <span className="text-xl font-bold">AgroLink</span>
           <span className="bg-white/20 text-xs px-2 py-1 rounded-full ml-2">Dashboard</span>
         </div>
         <div className="flex gap-4 text-sm items-center">
           <button className="hover:underline opacity-80">Feed</button>
           <a href="/rede" className="hover:underline opacity-80">Rede</a>
+          <a href="/vagas" className="hover:underline opacity-80">Vagas</a>
+          <a href="/marketplace" className="hover:underline opacity-80">Marketplace</a>
           <button className="hover:underline opacity-80">AgroIA</button>
           <button className="bg-secondary px-4 py-2 rounded-full font-semibold hover:bg-secondary-light transition-colors">
             Minha Conta

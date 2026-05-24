@@ -3,7 +3,7 @@
  * Run: DATABASE_URL=... npx tsx apps/api/src/lib/seed.ts
  */
 import 'dotenv/config'
-import { createDatabase, users, farms, farmCultures, marketPrices, posts, offers, newsArticles } from '@agrolink/database'
+import { createDatabase, users, farms, farmCultures, marketPrices, posts, offers, newsArticles, jobs, marketplaceProducts } from '@agrolink/database'
 import bcrypt from 'bcrypt'
 
 const db = createDatabase(process.env.DATABASE_URL!)
@@ -13,30 +13,18 @@ async function seed() {
 
   // ── Users ────────────────────────────────────────────────────────────────
   const passwordHash = await bcrypt.hash('senha12345', 12)
+  const { eq } = await import('drizzle-orm')
 
-  const [joao] = await db.insert(users).values({
-    email: 'joao@fazenda.com', phone: '66999887766',
-    name: 'João da Silva', username: 'joaosilva',
-    passwordHash, role: 'producer', verified: true,
-  }).onConflictDoNothing().returning()
+  async function upsertUser(values: typeof users.$inferInsert) {
+    await db.insert(users).values(values).onConflictDoNothing()
+    const [u] = await db.select().from(users).where(eq(users.email, values.email!))
+    return u
+  }
 
-  const [maria] = await db.insert(users).values({
-    email: 'maria@coop.com', phone: '65988776655',
-    name: 'Maria Souza', username: 'mariasouza',
-    passwordHash, role: 'cooperative', verified: true,
-  }).onConflictDoNothing().returning()
-
-  const [pedro] = await db.insert(users).values({
-    email: 'pedro@insumos.com', phone: '66977665544',
-    name: 'Pedro Alves', username: 'pedroalves',
-    passwordHash, role: 'supplier',
-  }).onConflictDoNothing().returning()
-
-  const [ana] = await db.insert(users).values({
-    email: 'ana@agronoma.com', phone: '65966554433',
-    name: 'Ana Rodrigues', username: 'anaagronoma',
-    passwordHash, role: 'technician', verified: true,
-  }).onConflictDoNothing().returning()
+  const joao = await upsertUser({ email: 'joao@fazenda.com', phone: '66999887766', name: 'João da Silva', username: 'joaosilva', passwordHash, role: 'producer', verified: true })
+  const maria = await upsertUser({ email: 'maria@coop.com', phone: '65988776655', name: 'Maria Souza', username: 'mariasouza', passwordHash, role: 'cooperative', verified: true })
+  const pedro = await upsertUser({ email: 'pedro@insumos.com', phone: '66977665544', name: 'Pedro Alves', username: 'pedroalves', passwordHash, role: 'supplier' })
+  const ana = await upsertUser({ email: 'ana@agronoma.com', phone: '65966554433', name: 'Ana Rodrigues', username: 'anaagronoma', passwordHash, role: 'technician', verified: true })
 
   console.log('  ✓ 4 usuários')
 
@@ -184,6 +172,115 @@ async function seed() {
   ]).onConflictDoNothing()
 
   console.log('  ✓ Notícias')
+
+  // ── Jobs ──────────────────────────────────────────────────────────────────
+  if (joao) {
+    await db.insert(jobs).values([
+      {
+        userId: joao.id, title: 'Operador de Máquinas Agrícolas',
+        description: 'Procuramos operador de colheitadeira e trator com experiência mínima de 2 anos em lavouras de soja e milho. Regime de safra (out–mar). Oferecemos moradia e alimentação.',
+        type: 'seasonal', culture: 'soja',
+        salaryMin: 2800, salaryMax: 3800,
+        city: 'Sorriso', state: 'MT', latitude: -12.549, longitude: -55.720,
+        deadline: new Date('2025-09-30'),
+      },
+      {
+        userId: joao.id, title: 'Técnico Agrícola – Monitoramento de Pragas',
+        description: 'Vaga permanente para técnico agrícola responsável pelo monitoramento de pragas e doenças nas lavouras. Desejável experiência com ferrugem asiática e lagarta do cartucho.',
+        type: 'permanent', culture: 'soja',
+        salaryMin: 3500, salaryMax: 5000,
+        city: 'Sorriso', state: 'MT', latitude: -12.549, longitude: -55.720,
+      },
+    ]).onConflictDoNothing()
+  }
+
+  if (maria) {
+    await db.insert(jobs).values([
+      {
+        userId: maria.id, title: 'Analista de Logística e Armazenagem',
+        description: 'Cooperativa busca profissional para gestão de logística de grãos, controle de armazenagem e programação de cargas. Conhecimento em sistemas de gestão (ERP) é um diferencial.',
+        type: 'permanent',
+        salaryMin: 4000, salaryMax: 6000,
+        city: 'Lucas do Rio Verde', state: 'MT', latitude: -13.057, longitude: -55.905,
+      },
+      {
+        userId: maria.id, title: 'Auxiliar de Classificação de Grãos (Safra)',
+        description: 'Contratação temporária para período de safra. Responsável pela classificação e pesagem de grãos na unidade armazenadora. Sem experiência necessária — treinamento oferecido.',
+        type: 'seasonal',
+        salaryMin: 1800, salaryMax: 2200,
+        city: 'Lucas do Rio Verde', state: 'MT', latitude: -13.057, longitude: -55.905,
+        deadline: new Date('2025-08-31'),
+      },
+    ]).onConflictDoNothing()
+  }
+
+  if (pedro) {
+    await db.insert(jobs).values([
+      {
+        userId: pedro.id, title: 'Representante Comercial – Insumos Agrícolas',
+        description: 'Vendedor externo para a linha de defensivos e fertilizantes. Território: MT e GO. Carteira de clientes existente. Veículo próprio necessário.',
+        type: 'permanent',
+        salaryMin: 3000, salaryMax: 4500,
+        city: 'Cuiabá', state: 'MT', latitude: -15.601, longitude: -56.097,
+      },
+    ]).onConflictDoNothing()
+  }
+
+  console.log('  ✓ Vagas de emprego')
+
+  // ── Marketplace Products ───────────────────────────────────────────────────
+  if (pedro) {
+    await db.insert(marketplaceProducts).values([
+      {
+        userId: pedro.id, name: 'Semente de Soja TMG 7062 IPRO',
+        description: 'Sementes certificadas de soja, variedade TMG 7062 IPRO. Alta produtividade e resistência à ferrugem. Embalagem de 40 kg. Grupo de maturação 6.2.',
+        category: 'seeds', price: 480.00, unit: 'saco 40kg',
+        stock: 200, city: 'Cuiabá', state: 'MT', latitude: -15.601, longitude: -56.097,
+      },
+      {
+        userId: pedro.id, name: 'Fertilizante MAP 10-52-00 Granulado',
+        description: 'Fertilizante fosfatado para aplicação no plantio. Ideal para correção e manutenção do solo em lavouras de soja e milho. Saco de 50 kg.',
+        category: 'fertilizers', price: 185.00, unit: 'saco 50kg',
+        stock: 500, city: 'Cuiabá', state: 'MT', latitude: -15.601, longitude: -56.097,
+      },
+      {
+        userId: pedro.id, name: 'Herbicida Glifosato 480 g/L',
+        description: 'Herbicida sistêmico de amplo espectro para controle de plantas daninhas em lavouras transgênicas. Galão de 20L.',
+        category: 'pesticides', price: 140.00, unit: 'galão 20L',
+        stock: 150, city: 'Cuiabá', state: 'MT', latitude: -15.601, longitude: -56.097,
+      },
+    ]).onConflictDoNothing()
+  }
+
+  if (joao) {
+    await db.insert(marketplaceProducts).values([
+      {
+        userId: joao.id, name: 'Trator New Holland TL5.100 – 2022',
+        description: 'Trator 100cv com apenas 800 horas de uso. Cabine, ar condicionado, tração 4x4. Revisões em dia. Retirada na Fazenda São João, Sorriso/MT.',
+        category: 'equipment', price: 280000.00, unit: 'unidade',
+        stock: 1, city: 'Sorriso', state: 'MT', latitude: -12.549, longitude: -55.720,
+      },
+      {
+        userId: joao.id, name: 'Soja em Grão – Safra 24/25 (Excedente)',
+        description: 'Venda de excedente de produção. Soja limpa, umidade 12%, impurezas < 1%. Disponível no silo da fazenda. Volume: 300 toneladas.',
+        category: 'grains', price: 119.50, unit: 'saca 60kg',
+        stock: 5000, city: 'Sorriso', state: 'MT', latitude: -12.549, longitude: -55.720,
+      },
+    ]).onConflictDoNothing()
+  }
+
+  if (maria) {
+    await db.insert(marketplaceProducts).values([
+      {
+        userId: maria.id, name: 'Inoculante para Soja – Rizobacter 5L',
+        description: 'Inoculante líquido para fixação biológica de nitrogênio em soja. Produto cooperativa, preço especial para associados.',
+        category: 'seeds', price: 95.00, unit: 'frasco 5L',
+        stock: 300, city: 'Lucas do Rio Verde', state: 'MT', latitude: -13.057, longitude: -55.905,
+      },
+    ]).onConflictDoNothing()
+  }
+
+  console.log('  ✓ Marketplace')
   console.log('\n✅ Seed concluído com sucesso!')
   process.exit(0)
 }

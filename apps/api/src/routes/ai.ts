@@ -182,11 +182,13 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
       reply.raw.write(`data: ${JSON.stringify({ done: true, messageId: assistantMsg.id, quickActions })}\n\n`)
       reply.raw.end()
 
-      // Update conversation updatedAt
-      await db
-        .update(aiConversations)
+      // Update conversation updatedAt (fire-and-forget after response is done)
+      db.update(aiConversations)
         .set({ updatedAt: new Date() })
         .where(eq(aiConversations.id, id))
+        .catch(() => {})
+
+      return reply
     }
   )
 

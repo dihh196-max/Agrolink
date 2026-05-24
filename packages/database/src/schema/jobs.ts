@@ -1,0 +1,58 @@
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  real,
+  boolean,
+  timestamp,
+  pgEnum,
+} from 'drizzle-orm/pg-core'
+import { users } from './users.js'
+import { cultureEnum } from './farms.js'
+
+export const jobTypeEnum = pgEnum('job_type', [
+  'seasonal',
+  'permanent',
+  'internship',
+  'service',
+])
+
+export const jobApplicationStatusEnum = pgEnum('job_application_status', [
+  'pending',
+  'accepted',
+  'rejected',
+])
+
+export const jobs = pgTable('jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  type: jobTypeEnum('type').notNull(),
+  culture: cultureEnum('culture'),
+  salaryMin: real('salary_min'),
+  salaryMax: real('salary_max'),
+  city: varchar('city', { length: 100 }).notNull(),
+  state: varchar('state', { length: 2 }).notNull(),
+  latitude: real('latitude'),
+  longitude: real('longitude'),
+  deadline: timestamp('deadline'),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const jobApplications = pgTable('job_applications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  jobId: uuid('job_id')
+    .notNull()
+    .references(() => jobs.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  message: text('message'),
+  status: jobApplicationStatusEnum('status').notNull().default('pending'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
