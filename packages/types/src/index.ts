@@ -9,6 +9,7 @@ export interface User {
   name: string
   username: string
   avatarUrl?: string
+  bio?: string
   role: UserRole
   verified: boolean
   premiumUntil?: string

@@ -169,7 +169,7 @@ export default function PublicProfileScreen() {
               style={styles.actionBtn}
               onPress={() => Alert.alert('Em breve', 'Parceria em breve!')}
             >
-              <Ionicons name="handshake-outline" size={20} color={colors.primary} />
+              <Ionicons name="people-outline" size={20} color={colors.primary} />
               <Text style={styles.actionBtnText}>Parceria</Text>
             </TouchableOpacity>
           </View>
