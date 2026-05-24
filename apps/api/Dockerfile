@@ -20,6 +20,9 @@ COPY packages/types      ./packages/types
 COPY packages/database   ./packages/database
 COPY apps/api            ./apps/api
 
+# Compile @agrolink/database so its dist/index.js exists at runtime
+RUN cd packages/database && npx tsc -p tsconfig.json
+
 ENV NODE_ENV=production
 EXPOSE 3001
 
