@@ -4,7 +4,7 @@
  */
 import 'dotenv/config'
 import { createDatabase, users, farms, farmCultures, marketPrices, posts, offers, newsArticles, jobs, marketplaceProducts } from '@agrolink/database'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 const db = createDatabase(process.env.DATABASE_URL!)
 

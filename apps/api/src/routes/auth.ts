@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { users } from '@agrolink/database'
