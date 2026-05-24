@@ -43,6 +43,14 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Necessário para clima e ofertas na sua região"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
       ]
     ]
   }
