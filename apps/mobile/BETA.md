@@ -54,7 +54,8 @@ node --import=tsx/esm apps/api/src/server.ts  # sobe a API (deixe rodando)
 ```
 
 A API escuta em `0.0.0.0:3001`. **Teste do próprio celular** abrindo no
-navegador: `http://192.168.2.21:3001/api/v1/health` — tem que responder.
+navegador: `http://192.168.2.21:3001/health` — tem que responder
+`{"status":"ok",...}`.
 
 > **Firewall:** se o celular não abrir o health, libere a porta 3001. No
 > PowerShell como Admin:
