@@ -29,6 +29,9 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="notifications" />
             <Stack.Screen name="chat/[threadId]" />
+            <Stack.Screen name="post/new" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="post/[id]" />
+            <Stack.Screen name="profile/[username]" />
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>
