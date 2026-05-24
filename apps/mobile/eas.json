@@ -20,13 +20,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://agrolink-api.up.railway.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://agrolink-production-17c8.up.railway.app/api/v1"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://agrolink-api.up.railway.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://agrolink-production-17c8.up.railway.app/api/v1"
       }
     }
   },
