@@ -1,0 +1,10 @@
+node_modules
+apps/web
+apps/mobile
+infra
+scripts
+.git
+.github
+*.log
+*.md
+docker-compose.yml
