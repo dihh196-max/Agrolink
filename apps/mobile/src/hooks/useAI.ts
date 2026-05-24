@@ -6,7 +6,9 @@ import Constants from 'expo-constants'
 import type { AIConversation, AIMessage } from '@agrolink/types'
 
 const BASE_URL =
-  Constants.expoConfig?.extra?.apiUrl ?? 'http://localhost:3001/api/v1'
+  process.env.EXPO_PUBLIC_API_URL ??
+  Constants.expoConfig?.extra?.apiUrl ??
+  'http://localhost:3001/api/v1'
 
 export function useConversations() {
   return useQuery<AIConversation[]>({
