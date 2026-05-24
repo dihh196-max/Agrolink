@@ -23,7 +23,6 @@ export function createDatabase(connectionString: string) {
   return drizzle(client, { schema })
 }
 
-// Re-export schema tables for use in queries
 export * from './schema/users.js'
 export * from './schema/farms.js'
 export * from './schema/posts.js'

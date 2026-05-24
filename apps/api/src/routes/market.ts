@@ -156,9 +156,10 @@ export const marketRoutes: FastifyPluginAsync = async (fastify) => {
       })
       .parse(request.body)
 
+    const { expiresAt, ...rest } = body
     const [offer] = await db
       .insert(offers)
-      .values({ ...body, userId: request.user.sub })
+      .values({ ...rest, userId: request.user.sub, expiresAt: expiresAt ? new Date(expiresAt) : undefined })
       .returning()
 
     return reply.code(201).send(offer)
