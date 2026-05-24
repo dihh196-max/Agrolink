@@ -32,6 +32,8 @@ export default function RootLayout() {
             <Stack.Screen name="post/new" options={{ presentation: 'modal' }} />
             <Stack.Screen name="post/[id]" />
             <Stack.Screen name="profile/[username]" />
+            <Stack.Screen name="edit-profile" />
+            <Stack.Screen name="settings" />
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>

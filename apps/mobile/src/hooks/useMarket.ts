@@ -62,3 +62,11 @@ export function useCreatePriceAlert() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['market', 'alerts'] }),
   })
 }
+
+export function useDeletePriceAlert() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/market/alerts/${id}`).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['market', 'alerts'] }),
+  })
+}

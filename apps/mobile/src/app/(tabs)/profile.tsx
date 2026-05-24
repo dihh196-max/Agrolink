@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
+import { router } from 'expo-router'
 import { api } from '../../lib/api.js'
 import { useAuthStore } from '../../store/auth.js'
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme.js'
@@ -112,10 +113,10 @@ export default function ProfileScreen() {
           {/* Menu */}
           <View style={styles.section}>
             {[
-              { icon: 'settings-outline', label: 'Configurações', action: () => {} },
-              { icon: 'shield-checkmark-outline', label: 'Privacidade', action: () => {} },
-              { icon: 'star-outline', label: 'Assinar Premium', action: () => {} },
-              { icon: 'help-circle-outline', label: 'Ajuda e Suporte', action: () => {} },
+              { icon: 'create-outline', label: 'Editar Perfil', action: () => router.push('/edit-profile') },
+              { icon: 'settings-outline', label: 'Configurações', action: () => router.push('/settings') },
+              { icon: 'star-outline', label: 'Assinar Premium', action: () => Alert.alert('Premium', 'Funcionalidade em breve!') },
+              { icon: 'help-circle-outline', label: 'Ajuda e Suporte', action: () => router.push('/settings') },
             ].map((item) => (
               <TouchableOpacity key={item.label} style={styles.menuItem} onPress={item.action}>
                 <Ionicons name={item.icon as any} size={22} color={colors.textSecondary} />
