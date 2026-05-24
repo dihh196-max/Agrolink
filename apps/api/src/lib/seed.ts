@@ -11,9 +11,17 @@ const db = createDatabase(process.env.DATABASE_URL!)
 async function seed() {
   console.log('🌱 Seeding AgroLink database...')
 
+  // ── Reset demo data (idempotent) ──────────────────────────────────────────
+  // Truncating users cascades to all user-owned rows via FK; the two tables
+  // without a user FK (prices, news) are cleared explicitly.
+  const { eq, sql } = await import('drizzle-orm')
+  await db.execute(
+    sql`TRUNCATE TABLE users, market_prices, news_articles RESTART IDENTITY CASCADE`
+  )
+  console.log('  ✓ Tabelas de demo limpas')
+
   // ── Users ────────────────────────────────────────────────────────────────
   const passwordHash = await bcrypt.hash('senha12345', 12)
-  const { eq } = await import('drizzle-orm')
 
   async function upsertUser(values: typeof users.$inferInsert) {
     await db.insert(users).values(values).onConflictDoNothing()
