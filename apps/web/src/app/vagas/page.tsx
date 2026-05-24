@@ -255,7 +255,7 @@ export default function VagasPage() {
 
   const handleApply = (jobId: string) => {
     api.post(`/jobs/${jobId}/apply`, { message: 'Tenho interesse nesta vaga.' })
-      .then(() => setApplied((prev) => new Set([...prev, jobId])))
+      .then(() => setApplied((prev) => new Set(Array.from(prev).concat(jobId))))
       .catch(() => {})
   }
 
