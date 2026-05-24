@@ -65,9 +65,9 @@ function Header({ title, right }: { title: string; right?: string }) {
 function TabBar({ active }: { active: string }) {
   const tabs = [
     { id: 'feed', icon: '🏠', label: 'Feed' },
-    { id: 'market', icon: '📈', label: 'Mercado' },
+    { id: 'vagas', icon: '💼', label: 'Vagas' },
     { id: 'ai', icon: '✨', label: 'AgroIA' },
-    { id: 'offers', icon: '🔄', label: 'Ofertas' },
+    { id: 'marketplace', icon: '🛒', label: 'Loja' },
     { id: 'profile', icon: '👤', label: 'Perfil' },
   ]
   return (
@@ -358,6 +358,146 @@ function NotificationsScreen() {
   )
 }
 
+// ─── VAGAS SCREEN ──────────────────────────────────────────────────────────────
+function VagasScreen() {
+  const jobs = [
+    { title: 'Operador de Máquinas Agrícolas', poster: 'Fazenda São João', type: 'Safra', typeColor: '#d97706', city: 'Sorriso/MT', salary: 'R$ 2.800–3.800/mês', deadline: '30/09/2025' },
+    { title: 'Técnico Agrícola – Monitoramento de Pragas', poster: 'Fazenda São João', type: 'Efetivo', typeColor: '#16a34a', city: 'Sorriso/MT', salary: 'R$ 3.500–5.000/mês' },
+    { title: 'Analista de Logística e Armazenagem', poster: 'Coop Centro-Oeste', type: 'Efetivo', typeColor: '#16a34a', city: 'Lucas do Rio Verde/MT', salary: 'R$ 4.000–6.000/mês' },
+    { title: 'Representante Comercial – Insumos', poster: 'Pedro Alves', type: 'Efetivo', typeColor: '#16a34a', city: 'Cuiabá/MT', salary: 'R$ 3.000–4.500/mês' },
+  ]
+  const filters = ['Todas', 'Safra', 'Efetivo', 'Serviço']
+  return (
+    <div style={{ paddingBottom: 70 }}>
+      <StatusBar />
+      <div style={{ background: C.primary, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 18 }}>💼</span>
+          <span style={{ color: '#fff', fontSize: 18, fontWeight: 700 }}>Vagas</span>
+        </div>
+        <div style={{ background: '#f5a623', color: '#fff', fontSize: 11, fontWeight: 700, padding: '5px 10px', borderRadius: 999, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span>+</span> Publicar
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 6, padding: '8px 12px', background: '#fff', borderBottom: `1px solid ${C.border}`, overflowX: 'auto' }}>
+        {filters.map((f, i) => (
+          <span key={f} style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: i === 0 ? C.primary : C.bg, color: i === 0 ? '#fff' : C.textSec, border: i === 0 ? 'none' : `1px solid ${C.border}` }}>{f}</span>
+        ))}
+      </div>
+      <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {jobs.map((j, i) => (
+          <div key={i} style={{ background: '#fff', borderRadius: 14, padding: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.text, flex: 1, paddingRight: 6, lineHeight: 1.3 }}>{j.title}</div>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: j.typeColor + '20', color: j.typeColor, whiteSpace: 'nowrap' }}>{j.type}</span>
+            </div>
+            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{j.poster}</div>
+            <div style={{ fontSize: 11, color: C.textSec, display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <span>📍 {j.city}</span>
+              <span style={{ color: '#16a34a', fontWeight: 600 }}>💰 {j.salary}</span>
+              {j.deadline && <span style={{ color: C.textMuted }}>⏱ até {j.deadline}</span>}
+            </div>
+            <div style={{ marginTop: 8, background: C.primary, borderRadius: 8, padding: '6px 0', textAlign: 'center', color: '#fff', fontSize: 12, fontWeight: 600 }}>Candidatar-se</div>
+          </div>
+        ))}
+      </div>
+      <TabBar active="vagas" />
+    </div>
+  )
+}
+
+// ─── MARKETPLACE SCREEN ────────────────────────────────────────────────────────
+function MarketplaceScreen() {
+  const products = [
+    { icon: '🌱', name: 'Semente de Soja TMG 7062 IPRO', price: 'R$ 480,00', unit: 'saco 40kg', seller: 'Pedro Alves', city: 'Cuiabá/MT', cat: 'Sementes', catColor: '#16a34a' },
+    { icon: '🧪', name: 'Fertilizante MAP 10-52-00', price: 'R$ 185,00', unit: 'saco 50kg', seller: 'Pedro Alves', city: 'Cuiabá/MT', cat: 'Fertilizante', catColor: '#2563eb' },
+    { icon: '🚜', name: 'Trator New Holland TL5.100 2022', price: 'R$ 280.000', unit: 'unidade', seller: 'João da Silva', city: 'Sorriso/MT', cat: 'Máquina', catColor: '#6b7280' },
+    { icon: '🌾', name: 'Soja em Grão – Safra 24/25', price: 'R$ 119,50', unit: 'saca 60kg', seller: 'João da Silva', city: 'Sorriso/MT', cat: 'Grãos', catColor: '#d97706' },
+  ]
+  const filters = ['Tudo', '🌱', '🧪', '🚜', '🌾', '🐄']
+  return (
+    <div style={{ paddingBottom: 90 }}>
+      <StatusBar />
+      <div style={{ background: C.primary, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 18 }}>🛒</span>
+          <span style={{ color: '#fff', fontSize: 18, fontWeight: 700 }}>Marketplace</span>
+        </div>
+        <div style={{ background: '#f5a623', color: '#fff', fontSize: 11, fontWeight: 700, padding: '5px 10px', borderRadius: 999 }}>+ Anunciar</div>
+      </div>
+      <div style={{ display: 'flex', gap: 6, padding: '8px 12px', background: '#fff', borderBottom: `1px solid ${C.border}` }}>
+        {filters.map((f, i) => (
+          <span key={i} style={{ fontSize: i === 0 ? 11 : 16, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: i === 0 ? C.primary : C.bg, color: i === 0 ? '#fff' : C.text, border: i === 0 ? 'none' : `1px solid ${C.border}` }}>{f}</span>
+        ))}
+      </div>
+      <div style={{ padding: '8px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {products.map((p, i) => (
+          <div key={i} style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ height: 60, background: '#f0f7f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>{p.icon}</div>
+            <div style={{ padding: '8px 8px 6px' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.text, lineHeight: 1.3, marginBottom: 3 }} className="line-clamp-2">{p.name}</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: C.primary }}>{p.price}</div>
+              <div style={{ fontSize: 10, color: C.textMuted }}>por {p.unit}</div>
+              <div style={{ fontSize: 10, color: C.textSec, marginTop: 3 }}>📍 {p.city}</div>
+              <div style={{ marginTop: 6, background: C.primary, borderRadius: 6, padding: '4px 0', textAlign: 'center', color: '#fff', fontSize: 10, fontWeight: 700 }}>Ver Produto</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* FAB */}
+      <div style={{ position: 'absolute', bottom: 76, right: 14, width: 44, height: 44, borderRadius: 22, background: '#f5a623', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>+</div>
+      <TabBar active="marketplace" />
+    </div>
+  )
+}
+
+// ─── POST JOB FORM SCREEN ──────────────────────────────────────────────────────
+function PostJobScreen() {
+  const field = (label: string, placeholder: string, type = 'text') => (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 4 }}>{label}</div>
+      <div style={{ border: `1.5px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', fontSize: 13, color: C.textMuted, background: '#fff' }}>{placeholder}</div>
+    </div>
+  )
+  return (
+    <div>
+      <StatusBar />
+      <div style={{ background: C.primary, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ color: '#fff', fontSize: 22, cursor: 'pointer' }}>✕</span>
+        <span style={{ color: '#fff', fontSize: 17, fontWeight: 700, flex: 1, textAlign: 'center' }}>Publicar Vaga</span>
+        <span style={{ fontSize: 22 }} />
+      </div>
+      <div style={{ padding: 14 }}>
+        {field('Título da vaga *', 'Ex: Operador de Colheitadeira')}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 6 }}>Tipo de contrato *</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {['Safra', 'Efetivo', 'Serviço', 'Estágio'].map((t, i) => (
+              <span key={t} style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 999, background: i === 0 ? C.primary : C.bg, color: i === 0 ? '#fff' : C.textSec, border: i === 0 ? 'none' : `1px solid ${C.border}` }}>{t}</span>
+            ))}
+          </div>
+        </div>
+        {field('Descrição *', 'Responsabilidades, requisitos...')}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 4 }}>Salário mín.</div>
+            <div style={{ border: `1.5px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', fontSize: 13, color: C.textMuted, background: '#fff' }}>R$ 1.800</div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 4 }}>Salário máx.</div>
+            <div style={{ border: `1.5px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', fontSize: 13, color: C.textMuted, background: '#fff' }}>R$ 3.500</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <div style={{ flex: 2 }}>{field('Cidade *', 'Sorriso')}</div>
+          <div style={{ flex: 1 }}>{field('UF', 'MT')}</div>
+        </div>
+        <div style={{ background: C.primary, borderRadius: 12, padding: '14px 0', textAlign: 'center', color: '#fff', fontSize: 15, fontWeight: 700, marginTop: 4 }}>Publicar Vaga</div>
+      </div>
+    </div>
+  )
+}
+
 export default function MobilePreview() {
   return (
     <div style={{ minHeight: '100vh', background: '#e8ede8', padding: '40px 20px' }}>
@@ -377,6 +517,14 @@ export default function MobilePreview() {
         <PhoneFrame title="Busca (pessoas, empresas, notícias)"><SearchScreen /></PhoneFrame>
         <PhoneFrame title="Mensagens (chat direto)"><MessagesScreen /></PhoneFrame>
         <PhoneFrame title="Notificações"><NotificationsScreen /></PhoneFrame>
+      </div>
+      <div style={{ textAlign: 'center', margin: '40px 0 24px' }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: C.primary }}>Novo: Vagas · Marketplace · Formulários</h2>
+      </div>
+      <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <PhoneFrame title="Vagas de Emprego"><VagasScreen /></PhoneFrame>
+        <PhoneFrame title="Marketplace Agrícola"><MarketplaceScreen /></PhoneFrame>
+        <PhoneFrame title="Publicar Vaga (formulário)"><PostJobScreen /></PhoneFrame>
       </div>
     </div>
   )

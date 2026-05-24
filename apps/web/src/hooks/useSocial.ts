@@ -111,3 +111,19 @@ export function useFollowing() {
     queryFn: () => api.get('/partnerships/following').then((r) => r.data),
   })
 }
+
+export function usePostJob() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: Record<string, unknown>) => api.post('/jobs', body).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['jobs'] }),
+  })
+}
+
+export function usePostProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: Record<string, unknown>) => api.post('/marketplace', body).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['marketplace'] }),
+  })
+}
