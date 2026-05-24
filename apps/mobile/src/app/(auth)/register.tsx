@@ -21,14 +21,23 @@ const ROLE_OPTIONS = [
   { value: 'cooperative', label: 'Cooperativa / Trading' },
 ] as const
 
+type Role = (typeof ROLE_OPTIONS)[number]['value']
+
 export default function RegisterScreen() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string
+    username: string
+    email: string
+    phone: string
+    password: string
+    role: Role
+  }>({
     name: '',
     username: '',
     email: '',
     phone: '',
     password: '',
-    role: 'producer' as const,
+    role: 'producer',
   })
   const [loading, setLoading] = useState(false)
   const register = useAuthStore((s) => s.register)

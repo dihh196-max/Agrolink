@@ -2,14 +2,16 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { api } from '../lib/api.js'
 import type { Post, PostComment } from '@agrolink/types'
 
+type FeedPage = { items: Post[]; hasMore: boolean; nextCursor?: string }
+
 export function useFeed() {
   return useInfiniteQuery({
     queryKey: ['feed'],
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam }): Promise<FeedPage> =>
       api
         .get('/feed', { params: { cursor: pageParam, limit: 20 } })
         .then((r) => r.data),
-    getNextPageParam: (last: { hasMore: boolean; nextCursor?: string }) =>
+    getNextPageParam: (last: FeedPage) =>
       last.hasMore ? last.nextCursor : undefined,
     initialPageParam: undefined as string | undefined,
   })
