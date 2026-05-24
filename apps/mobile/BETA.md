@@ -4,7 +4,7 @@ Objetivo: gerar um APK instalável no Android que conversa com a API rodando no 
 
 ## 1. Descobrir o IP local do seu PC
 
-- **Windows:** `ipconfig` → procure "Endereço IPv4" (ex: `192.168.0.10`)
+- **Windows:** `ipconfig` → procure "Endereço IPv4" (ex: `192.168.2.21`)
 - **macOS/Linux:** `ipconfig getifaddr en0` ou `hostname -I`
 
 Anote esse IP. O celular precisa estar na **mesma rede Wi-Fi** que o PC.
