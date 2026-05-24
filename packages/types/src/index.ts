@@ -258,6 +258,49 @@ export interface Connection {
   createdAt: string
 }
 
+// ─── Parcerias (follow) ─────────────────────────────────────────────────────
+
+export interface Partnership {
+  id: string
+  followerId: string
+  followingId: string
+  createdAt: string
+}
+
+export interface PartnerProfile extends Pick<User, 'id' | 'name' | 'username' | 'avatarUrl' | 'role' | 'verified'> {
+  isPartner: boolean
+}
+
+// ─── Mensagens diretas (chat) ────────────────────────────────────────────────
+
+export interface MessageThread {
+  id: string
+  otherUser: Pick<User, 'id' | 'name' | 'username' | 'avatarUrl' | 'role'>
+  lastMessage?: string
+  lastMessageAt?: string
+  unreadCount: number
+  createdAt: string
+}
+
+export interface DirectMessage {
+  id: string
+  threadId: string
+  senderId: string
+  content: string
+  read: boolean
+  createdAt: string
+}
+
+// ─── Busca ────────────────────────────────────────────────────────────────────
+
+export interface SearchResults {
+  people: (Pick<User, 'id' | 'name' | 'username' | 'avatarUrl' | 'role' | 'verified'>)[]
+  companies: (Pick<User, 'id' | 'name' | 'username' | 'avatarUrl' | 'role' | 'verified'>)[]
+  posts: Post[]
+  news: NewsArticle[]
+  offers: Offer[]
+}
+
 // ─── Groups ───────────────────────────────────────────────────────────────────
 
 export interface Group {

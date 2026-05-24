@@ -238,17 +238,145 @@ function AIScreen() {
   )
 }
 
+// ─── SEARCH SCREEN ─────────────────────────────────────────────────────────
+function SearchScreen() {
+  const people = [
+    { initial: 'A', name: 'Ana Rodrigues', role: 'Técnico', user: 'anaagronoma', v: true },
+    { initial: 'J', name: 'João da Silva', role: 'Produtor', user: 'joaosilva', v: true },
+  ]
+  const companies = [{ initial: 'M', name: 'Maria Souza', role: 'Cooperativa', user: 'mariasouza', v: true }]
+  return (
+    <div>
+      <StatusBar />
+      <Header title="Pesquisar" />
+      <div style={{ margin: 12, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: `1.5px solid ${C.border}`, borderRadius: 999, padding: '10px 14px' }}>
+        <span style={{ color: C.textMuted }}>🔍</span>
+        <span style={{ fontSize: 14, color: C.text }}>soja</span>
+      </div>
+      <div style={{ display: 'flex', gap: 6, padding: '0 12px 8px', overflowX: 'auto' }}>
+        {['Tudo', 'Pessoas', 'Empresas', 'Posts', 'Notícias'].map((f, i) => (
+          <span key={f} style={{ fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 999, whiteSpace: 'nowrap', background: i === 0 ? C.primary : '#fff', color: i === 0 ? '#fff' : C.textSec, border: i === 0 ? 'none' : `1px solid ${C.border}` }}>{f}</span>
+        ))}
+      </div>
+      <div style={{ padding: '0 12px' }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: C.textSec, textTransform: 'uppercase', margin: '8px 0' }}>Empresas</div>
+        {companies.map((p) => <SearchRow key={p.user} {...p} />)}
+        <div style={{ fontSize: 11, fontWeight: 600, color: C.textSec, textTransform: 'uppercase', margin: '12px 0 8px' }}>Pessoas</div>
+        {people.map((p) => <SearchRow key={p.user} {...p} />)}
+        <div style={{ fontSize: 11, fontWeight: 600, color: C.textSec, textTransform: 'uppercase', margin: '12px 0 8px' }}>Notícias</div>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>USDA eleva projeção de soja do Brasil para 169 mi t</div>
+          <div style={{ fontSize: 11, color: C.primary, marginTop: 4 }}>Notícia Agrícola</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+function SearchRow({ initial, name, role, user, v }: any) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', padding: 10, borderRadius: 12, marginBottom: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+      <div style={{ width: 40, height: 40, borderRadius: 20, background: C.primaryLight, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{initial}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{name} {v && <span style={{ color: C.primary }}>✓</span>}</div>
+        <div style={{ fontSize: 11, color: C.textMuted }}>@{user} · {role}</div>
+      </div>
+      <span style={{ color: C.textMuted }}>›</span>
+    </div>
+  )
+}
+
+// ─── MESSAGES SCREEN ───────────────────────────────────────────────────────
+function MessagesScreen() {
+  const threads = [
+    { initial: 'M', name: 'Maria Souza', last: 'Oi João! Compramos sim. O preço hoje está R$ 120,00/sc...', time: '2min', unread: 1 },
+    { initial: 'P', name: 'Pedro Alves', last: 'Tenho defensivos com 10% de desconto para...', time: '1h', unread: 0 },
+  ]
+  return (
+    <div>
+      <StatusBar />
+      <Header title="Mensagens" right="✎" />
+      <div style={{ padding: 12 }}>
+        {threads.map((t) => (
+          <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', padding: 12, borderRadius: 12, marginBottom: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ width: 50, height: 50, borderRadius: 25, background: C.primaryLight, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18 }}>{t.initial}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.name}</span>
+                <span style={{ fontSize: 11, color: C.textMuted }}>{t.time}</span>
+              </div>
+              <div style={{ fontSize: 12, color: t.unread ? C.text : C.textSec, fontWeight: t.unread ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.last}</div>
+            </div>
+            {t.unread > 0 && <div style={{ background: C.primary, minWidth: 20, height: 20, borderRadius: 10, color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t.unread}</div>}
+          </div>
+        ))}
+        {/* chat preview */}
+        <div style={{ marginTop: 8, background: '#fff', borderRadius: 12, padding: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 8 }}>Conversa com Maria Souza</div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+            <div style={{ maxWidth: '80%', background: C.primary, color: '#fff', borderRadius: 14, padding: '8px 12px', fontSize: 13 }}>Tenho 500t de soja. Qual o preço?</div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <div style={{ maxWidth: '80%', background: '#f0f4f0', color: C.text, borderRadius: 14, padding: '8px 12px', fontSize: 13 }}>R$ 120,00/sc, entrega até 31/07 👍</div>
+          </div>
+        </div>
+      </div>
+      <TabBar active="" />
+    </div>
+  )
+}
+
+// ─── NOTIFICATIONS SCREEN ──────────────────────────────────────────────────
+function NotificationsScreen() {
+  const notifs = [
+    { icon: '✉️', title: 'Mensagem de Maria Souza', body: 'Oi João! Compramos sim. O preço hoje...', unread: true },
+    { icon: '🤝', title: 'Nova parceria', body: 'Maria Souza agora acompanha você', unread: true },
+    { icon: '❤️', title: 'Ana curtiu seu post', body: 'Soja com ótimo desenvolvimento...', unread: false },
+    { icon: '📈', title: 'Alerta de preço: Soja', body: 'Soja atingiu R$ 118,50/sc (+1,02%)', unread: false },
+    { icon: '📰', title: 'Boletim do dia', body: 'USDA eleva projeção de soja do Brasil', unread: false },
+  ]
+  return (
+    <div>
+      <StatusBar />
+      <div style={{ background: C.primary, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ color: '#fff', fontSize: 20 }}>‹</span>
+        <span style={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>Notificações</span>
+        <span style={{ color: '#fff', fontSize: 12 }}>Ler tudo</span>
+      </div>
+      <div style={{ padding: 12 }}>
+        {notifs.map((n, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, background: n.unread ? '#f0f7f1' : '#fff', padding: 12, borderRadius: 12, marginBottom: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <span style={{ fontSize: 24 }}>{n.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{n.title}</div>
+              <div style={{ fontSize: 12, color: C.textSec }}>{n.body}</div>
+            </div>
+            {n.unread && <div style={{ width: 10, height: 10, borderRadius: 5, background: C.primary }} />}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function MobilePreview() {
   return (
     <div style={{ minHeight: '100vh', background: '#e8ede8', padding: '40px 20px' }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, color: C.primary }}>🌱 AgroLink — App Mobile</h1>
-        <p style={{ color: C.textSec, marginTop: 8 }}>React Native (Expo) · iOS + Android · Preview das telas principais</p>
+        <p style={{ color: C.textSec, marginTop: 8 }}>React Native (Expo) · iOS + Android · Preview das telas</p>
       </div>
       <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
         <PhoneFrame title="Feed Social"><FeedScreen /></PhoneFrame>
         <PhoneFrame title="Mercado / Cotações"><MarketScreen /></PhoneFrame>
         <PhoneFrame title="AgroIA (chat)"><AIScreen /></PhoneFrame>
+      </div>
+      <div style={{ textAlign: 'center', margin: '40px 0 24px' }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: C.primary }}>Novidades: Busca · Mensagens · Notificações</h2>
+      </div>
+      <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <PhoneFrame title="Busca (pessoas, empresas, notícias)"><SearchScreen /></PhoneFrame>
+        <PhoneFrame title="Mensagens (chat direto)"><MessagesScreen /></PhoneFrame>
+        <PhoneFrame title="Notificações"><NotificationsScreen /></PhoneFrame>
       </div>
     </div>
   )

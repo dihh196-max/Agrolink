@@ -14,6 +14,9 @@ import { aiRoutes } from './routes/ai.js'
 import { weatherRoutes } from './routes/weather.js'
 import { usersRoutes } from './routes/users.js'
 import { notificationsRoutes } from './routes/notifications.js'
+import { searchRoutes } from './routes/search.js'
+import { partnershipsRoutes } from './routes/partnerships.js'
+import { messagesRoutes } from './routes/messages.js'
 import type { Database } from '@agrolink/database'
 
 declare module 'fastify' {
@@ -52,6 +55,9 @@ await fastify.register(marketRoutes, { prefix: API_PREFIX })
 await fastify.register(aiRoutes, { prefix: API_PREFIX })
 await fastify.register(weatherRoutes, { prefix: API_PREFIX })
 await fastify.register(notificationsRoutes, { prefix: API_PREFIX })
+await fastify.register(searchRoutes, { prefix: API_PREFIX })
+await fastify.register(partnershipsRoutes, { prefix: API_PREFIX })
+await fastify.register(messagesRoutes, { prefix: API_PREFIX })
 
 // Health check
 fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))

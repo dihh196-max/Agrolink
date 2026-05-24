@@ -65,6 +65,9 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="person-outline" color={color} />,
         }}
       />
+      {/* Reached via header icons, hidden from tab bar */}
+      <Tabs.Screen name="search" options={{ href: null }} />
+      <Tabs.Screen name="messages" options={{ href: null }} />
     </Tabs>
   )
 }

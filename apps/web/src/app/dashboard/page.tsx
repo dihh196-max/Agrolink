@@ -83,8 +83,9 @@ export default function DashboardPage() {
           <span className="text-xl font-bold">AgroLink</span>
           <span className="bg-white/20 text-xs px-2 py-1 rounded-full ml-2">Dashboard</span>
         </div>
-        <div className="flex gap-4 text-sm">
+        <div className="flex gap-4 text-sm items-center">
           <button className="hover:underline opacity-80">Feed</button>
+          <a href="/rede" className="hover:underline opacity-80">Rede</a>
           <button className="hover:underline opacity-80">AgroIA</button>
           <button className="bg-secondary px-4 py-2 rounded-full font-semibold hover:bg-secondary-light transition-colors">
             Minha Conta

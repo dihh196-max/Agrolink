@@ -16,3 +16,5 @@ coverage
 packages/database/dist
 # Lock file — use npm install to regenerate
 package-lock.json
+apps/web/tsconfig.tsbuildinfo
+*.tsbuildinfo

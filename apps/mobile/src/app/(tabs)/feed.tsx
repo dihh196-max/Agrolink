@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useFeed, useReactToPost } from '../../hooks/useFeed.js'
+import { useNotifications } from '../../hooks/useSocial.js'
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme.js'
 import type { Post } from '@agrolink/types'
 
@@ -106,6 +107,8 @@ function PostCard({ post }: { post: Post }) {
 
 export default function FeedScreen() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = useFeed()
+  const { data: unreadNotifs } = useNotifications(true)
+  const unreadCount = unreadNotifs?.length ?? 0
 
   const posts = data?.pages.flatMap((p) => p.items) ?? []
 
@@ -116,9 +119,24 @@ export default function FeedScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerLogo}>🌱 AgroLink</Text>
-        <TouchableOpacity onPress={() => router.push('/notifications')}>
-          <Ionicons name="notifications-outline" size={24} color={colors.white} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+            <Ionicons name="search-outline" size={24} color={colors.white} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/messages')}>
+            <Ionicons name="chatbubbles-outline" size={24} color={colors.white} />
+          </TouchableOpacity>
+          <View>
+            <TouchableOpacity onPress={() => router.push('/notifications')}>
+              <Ionicons name="notifications-outline" size={24} color={colors.white} />
+            </TouchableOpacity>
+            {unreadCount > 0 && (
+              <View style={styles.notifBadge}>
+                <Text style={styles.notifBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </View>
+        </View>
       </View>
 
       {/* New post CTA */}
@@ -160,6 +178,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   headerLogo: { ...typography.h3, color: colors.white },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  notifBadge: {
+    position: 'absolute', top: -6, right: -8, backgroundColor: colors.secondary,
+    minWidth: 18, height: 18, borderRadius: 9, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4,
+  },
+  notifBadgeText: { ...typography.caption, color: colors.white, fontWeight: '700', fontSize: 10 },
   newPost: {
     flexDirection: 'row',
     alignItems: 'center',

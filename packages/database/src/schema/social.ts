@@ -91,3 +91,42 @@ export const newsArticles = pgTable('news_articles', {
   publishedAt: timestamp('published_at').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
+
+// ─── Parcerias (follow — one-directional) ─────────────────────────────────────
+export const partnerships = pgTable('partnerships', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  followerId: uuid('follower_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  followingId: uuid('following_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// ─── Mensagens diretas (chat) ─────────────────────────────────────────────────
+export const messageThreads = pgTable('message_threads', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userAId: uuid('user_a_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  userBId: uuid('user_b_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  lastMessage: text('last_message'),
+  lastMessageAt: timestamp('last_message_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const directMessages = pgTable('direct_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  threadId: uuid('thread_id')
+    .notNull()
+    .references(() => messageThreads.id, { onDelete: 'cascade' }),
+  senderId: uuid('sender_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  read: boolean('read').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
