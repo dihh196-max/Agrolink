@@ -128,7 +128,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         .reverse()
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
 
-      // Stream response
+      // Stream response — headers sent first, errors go as SSE events
       reply.raw.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -137,19 +137,29 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
 
       let fullContent = ''
 
-      const stream = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        system: `${SYSTEM_PROMPT}\n\nContexto do usuário: ${contextInfo}`,
-        messages,
-        stream: true,
-      })
+      try {
+        const stream = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          system: `${SYSTEM_PROMPT}\n\nContexto do usuário: ${contextInfo}`,
+          messages,
+          stream: true,
+        })
 
-      for await (const event of stream) {
-        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-          fullContent += event.delta.text
-          reply.raw.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`)
+        for await (const event of stream) {
+          if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+            fullContent += event.delta.text
+            reply.raw.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`)
+          }
         }
+      } catch (err: any) {
+        const isInvalidKey = err?.status === 401
+        const errorMsg = isInvalidKey
+          ? 'Chave da API Anthropic inválida. Configure ANTHROPIC_API_KEY no servidor.'
+          : `Erro ao conectar com a AgroIA: ${err?.message ?? 'erro desconhecido'}`
+
+        reply.raw.write(`data: ${JSON.stringify({ text: errorMsg })}\n\n`)
+        fullContent = errorMsg
       }
 
       // Extract quick actions from response (simple heuristic)
@@ -166,12 +176,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
       // Save assistant message
       const [assistantMsg] = await db
         .insert(aiMessages)
-        .values({
-          conversationId: id,
-          role: 'assistant',
-          content: fullContent,
-          quickActions,
-        })
+        .values({ conversationId: id, role: 'assistant', content: fullContent, quickActions })
         .returning()
 
       reply.raw.write(`data: ${JSON.stringify({ done: true, messageId: assistantMsg.id, quickActions })}\n\n`)

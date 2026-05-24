@@ -12,3 +12,7 @@ coverage
 *.log
 .DS_Store
 .cache
+# Database compiled output (rebuilt on install)
+packages/database/dist
+# Lock file — use npm install to regenerate
+package-lock.json

@@ -20,10 +20,16 @@
     },
     "db:generate": {
       "cache": false,
-      "outputs": []
+      "outputs": ["src/migrations/**"]
     },
     "db:migrate": {
       "cache": false,
+      "dependsOn": ["db:generate"],
+      "outputs": []
+    },
+    "seed": {
+      "cache": false,
+      "dependsOn": ["^build"],
       "outputs": []
     }
   }

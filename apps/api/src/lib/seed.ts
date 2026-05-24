@@ -1,0 +1,194 @@
+/**
+ * Seed script — populate the database with realistic demo data.
+ * Run: DATABASE_URL=... npx tsx apps/api/src/lib/seed.ts
+ */
+import 'dotenv/config'
+import { createDatabase, users, farms, farmCultures, marketPrices, posts, offers, newsArticles } from '@agrolink/database'
+import bcrypt from 'bcrypt'
+
+const db = createDatabase(process.env.DATABASE_URL!)
+
+async function seed() {
+  console.log('🌱 Seeding AgroLink database...')
+
+  // ── Users ────────────────────────────────────────────────────────────────
+  const passwordHash = await bcrypt.hash('senha12345', 12)
+
+  const [joao] = await db.insert(users).values({
+    email: 'joao@fazenda.com', phone: '66999887766',
+    name: 'João da Silva', username: 'joaosilva',
+    passwordHash, role: 'producer', verified: true,
+  }).onConflictDoNothing().returning()
+
+  const [maria] = await db.insert(users).values({
+    email: 'maria@coop.com', phone: '65988776655',
+    name: 'Maria Souza', username: 'mariasouza',
+    passwordHash, role: 'cooperative', verified: true,
+  }).onConflictDoNothing().returning()
+
+  const [pedro] = await db.insert(users).values({
+    email: 'pedro@insumos.com', phone: '66977665544',
+    name: 'Pedro Alves', username: 'pedroalves',
+    passwordHash, role: 'supplier',
+  }).onConflictDoNothing().returning()
+
+  const [ana] = await db.insert(users).values({
+    email: 'ana@agronoma.com', phone: '65966554433',
+    name: 'Ana Rodrigues', username: 'anaagronoma',
+    passwordHash, role: 'technician', verified: true,
+  }).onConflictDoNothing().returning()
+
+  console.log('  ✓ 4 usuários')
+
+  // ── Farms ─────────────────────────────────────────────────────────────────
+  if (joao) {
+    const [fazendaSJ] = await db.insert(farms).values({
+      userId: joao.id, name: 'Fazenda São João',
+      areaHectares: 2800, city: 'Sorriso', state: 'MT',
+      latitude: -12.549, longitude: -55.720,
+    }).onConflictDoNothing().returning()
+
+    if (fazendaSJ) {
+      await db.insert(farmCultures).values([
+        { farmId: fazendaSJ.id, culture: 'soja', areaHectares: 1800, safra: '24/25', year: 2025 },
+        { farmId: fazendaSJ.id, culture: 'milho', areaHectares: 1000, safra: '24/25', year: 2025 },
+      ]).onConflictDoNothing()
+    }
+  }
+
+  if (maria) {
+    await db.insert(farms).values({
+      userId: maria.id, name: 'Coop Centro-Oeste',
+      areaHectares: 15000, city: 'Lucas do Rio Verde', state: 'MT',
+      latitude: -13.057, longitude: -55.905,
+    }).onConflictDoNothing()
+  }
+
+  console.log('  ✓ Fazendas e culturas')
+
+  // ── Market Prices ─────────────────────────────────────────────────────────
+  await db.insert(marketPrices).values([
+    { culture: 'soja',      price: 118.50, currency: 'BRL', unit: 'saca_60kg', source: 'CEPEA', variation24h:  1.20, variationPercent24h:  1.02 },
+    { culture: 'milho',     price:  62.30, currency: 'BRL', unit: 'saca_60kg', source: 'CEPEA', variation24h: -0.50, variationPercent24h: -0.80 },
+    { culture: 'boi_gordo', price: 290.00, currency: 'BRL', unit: 'arroba',    source: 'CEPEA', variation24h:  2.10, variationPercent24h:  0.73 },
+    { culture: 'algodao',   price:  95.00, currency: 'BRL', unit: 'saca_60kg', source: 'CEPEA', variation24h:  0.30, variationPercent24h:  0.32 },
+    { culture: 'cafe',      price: 1250.0, currency: 'BRL', unit: 'saca_60kg', source: 'CEPEA', variation24h:-18.00, variationPercent24h: -1.42 },
+    { culture: 'trigo',     price:  72.80, currency: 'BRL', unit: 'saca_60kg', source: 'CEPEA', variation24h:  0.60, variationPercent24h:  0.83 },
+  ]).onConflictDoNothing()
+
+  console.log('  ✓ Cotações de mercado')
+
+  // ── Posts ─────────────────────────────────────────────────────────────────
+  if (joao) {
+    await db.insert(posts).values([
+      {
+        userId: joao.id,
+        content: 'Soja com ótimo desenvolvimento nessa safra! Expectativa de 65 sc/ha. Clima favorável em Sorriso/MT. 🌱',
+        tags: ['soja', 'safra2526', 'sorriso', 'mt'],
+        city: 'Sorriso', state: 'MT', latitude: -12.55, longitude: -55.72,
+        reactionsCount: { like: 47, applause: 12, useful: 31, insightful: 8 },
+        commentsCount: 9,
+      },
+      {
+        userId: joao.id,
+        content: 'Aplicação de fungicida concluída nas 1.800 ha de soja. Janela de clima perfeita. Estação meteorológica da fazenda registrou umidade ideal. ✅ #manejo',
+        tags: ['manejo', 'soja', 'fungicida'],
+        city: 'Sorriso', state: 'MT', latitude: -12.55, longitude: -55.72,
+        reactionsCount: { like: 23, applause: 5, useful: 41, insightful: 3 },
+        commentsCount: 4,
+      },
+    ]).onConflictDoNothing()
+  }
+
+  if (ana) {
+    await db.insert(posts).values([
+      {
+        userId: ana.id,
+        content: 'Alerta fitossanitário: identificado foco de ferrugem asiática na região de Sorriso. Produtores devem monitorar as lavouras e acionar aplicação preventiva! 🚨 #ferrugem #soja #alerta',
+        tags: ['ferrugem', 'soja', 'alerta', 'fitossanidade'],
+        city: 'Sorriso', state: 'MT', latitude: -12.55, longitude: -55.72,
+        reactionsCount: { like: 89, applause: 14, useful: 156, insightful: 42 },
+        commentsCount: 28,
+      },
+    ]).onConflictDoNothing()
+  }
+
+  if (maria) {
+    await db.insert(posts).values([
+      {
+        userId: maria.id,
+        content: 'Cooperativa Centro-Oeste anuncia preço de R$ 120,00/sc para soja com entrega até 31/07. Consulte condições na cooperativa. 📋 #cooperativa #soja #comercializacao',
+        tags: ['cooperativa', 'soja', 'comercializacao'],
+        city: 'Lucas do Rio Verde', state: 'MT', latitude: -13.05, longitude: -55.90,
+        reactionsCount: { like: 112, applause: 8, useful: 95, insightful: 21 },
+        commentsCount: 37,
+      },
+    ]).onConflictDoNothing()
+  }
+
+  console.log('  ✓ Posts do feed')
+
+  // ── Offers ────────────────────────────────────────────────────────────────
+  if (joao) {
+    await db.insert(offers).values([
+      {
+        userId: joao.id, type: 'sell', culture: 'soja',
+        volumeTons: 500, pricePerUnit: 119.50, unit: 'saca_60kg',
+        description: 'Soja limpa, safra 24/25. Pronta para entrega em silo próprio.',
+        latitude: -12.549, longitude: -55.720, city: 'Sorriso', state: 'MT',
+      },
+      {
+        userId: joao.id, type: 'sell', culture: 'milho',
+        volumeTons: 200, pricePerUnit: 63.00, unit: 'saca_60kg',
+        description: 'Milho 2ª safra. Umidade 13%.',
+        latitude: -12.549, longitude: -55.720, city: 'Sorriso', state: 'MT',
+      },
+    ]).onConflictDoNothing()
+  }
+
+  if (maria) {
+    await db.insert(offers).values([
+      {
+        userId: maria.id, type: 'buy', culture: 'soja',
+        volumeTons: 5000, pricePerUnit: 120.00, unit: 'saca_60kg',
+        description: 'Cooperativa comprando soja para safra 24/25. Pagamento em 30 dias.',
+        latitude: -13.057, longitude: -55.905, city: 'Lucas do Rio Verde', state: 'MT',
+      },
+    ]).onConflictDoNothing()
+  }
+
+  console.log('  ✓ Ofertas de mercado')
+
+  // ── News ──────────────────────────────────────────────────────────────────
+  await db.insert(newsArticles).values([
+    {
+      title: 'USDA eleva projeção de produção de soja no Brasil para 169 milhões de toneladas',
+      summary: 'O Departamento de Agricultura dos EUA revisou para cima a estimativa de produção brasileira de soja na safra 24/25, impulsionada pelas condições climáticas favoráveis no Mato Grosso.',
+      aiSummary: 'Positivo para produtores: maior oferta pode pressionar preços no curto prazo, mas confirmação da safra forte fortalece posição do Brasil no mercado global.',
+      priceImpact: 'negative',
+      affectedCultures: ['soja'],
+      sourceUrl: 'https://exemplo.com/usda-soja-brasil',
+      sourceName: 'Notícia Agrícola',
+      publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    },
+    {
+      title: 'Boi gordo encerra semana em alta com demanda aquecida no mercado interno',
+      summary: 'A arroba do boi gordo fechou a semana com valorização de 1,8%, impulsionada pela maior demanda de frigoríficos no Centro-Oeste.',
+      aiSummary: 'Momento favorável para pecuaristas com animais prontos para abate. Tendência de alta deve se manter nas próximas 2 semanas.',
+      priceImpact: 'positive',
+      affectedCultures: ['boi_gordo'],
+      sourceUrl: 'https://exemplo.com/boi-gordo-alta',
+      sourceName: 'CEPEA Informa',
+      publishedAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
+    },
+  ]).onConflictDoNothing()
+
+  console.log('  ✓ Notícias')
+  console.log('\n✅ Seed concluído com sucesso!')
+  process.exit(0)
+}
+
+seed().catch((err) => {
+  console.error('❌ Seed falhou:', err)
+  process.exit(1)
+})

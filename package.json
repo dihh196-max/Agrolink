@@ -8,11 +8,16 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
+    "dev:local": "bash scripts/dev.sh",
+    "dev:seed": "bash scripts/dev.sh --seed",
+    "dev:reset": "bash scripts/dev.sh --reset",
     "build": "turbo run build",
+    "build:db": "tsc -p packages/database/tsconfig.json",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "db:generate": "turbo run db:generate",
-    "db:migrate": "turbo run db:migrate"
+    "db:generate": "cd packages/database && npx drizzle-kit generate",
+    "db:migrate": "cd packages/database && npx drizzle-kit migrate",
+    "seed": "npx tsx apps/api/src/lib/seed.ts"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
