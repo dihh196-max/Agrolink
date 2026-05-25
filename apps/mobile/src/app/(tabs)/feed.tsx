@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useFeed, useReactToPost } from '../../hooks/useFeed.js'
 import { useNotifications } from '../../hooks/useSocial.js'
+import { StoriesBar } from '../../components/StoriesBar.js'
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme.js'
 import type { Post } from '@agrolink/types'
 
@@ -138,6 +139,9 @@ export default function FeedScreen() {
           </View>
         </View>
       </View>
+
+      {/* Stories */}
+      <StoriesBar />
 
       {/* New post CTA */}
       <TouchableOpacity style={styles.newPost} onPress={() => router.push('/post/new')}>

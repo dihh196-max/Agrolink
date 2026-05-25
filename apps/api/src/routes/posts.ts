@@ -9,8 +9,8 @@ const createPostSchema = z.object({
     .array(
       z.object({
         type: z.enum(['image', 'video']),
-        url: z.string().url(),
-        thumbnailUrl: z.string().url().optional(),
+        url: z.string().min(1),
+        thumbnailUrl: z.string().optional(),
       })
     )
     .default([]),

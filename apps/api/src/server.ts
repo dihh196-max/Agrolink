@@ -9,6 +9,7 @@ import { env } from './lib/env.js'
 import authPlugin from './plugins/auth.js'
 import { authRoutes } from './routes/auth.js'
 import { postsRoutes } from './routes/posts.js'
+import { storiesRoutes } from './routes/stories.js'
 import { marketRoutes } from './routes/market.js'
 import { aiRoutes } from './routes/ai.js'
 import { weatherRoutes } from './routes/weather.js'
@@ -27,7 +28,10 @@ declare module 'fastify' {
   }
 }
 
-const fastify = Fastify({ logger: env.NODE_ENV !== 'production' })
+const fastify = Fastify({
+  logger: env.NODE_ENV !== 'production',
+  bodyLimit: 20 * 1024 * 1024,
+})
 
 // Security
 await fastify.register(helmet, { contentSecurityPolicy: false })
@@ -53,6 +57,7 @@ const API_PREFIX = '/api/v1'
 await fastify.register(authRoutes, { prefix: API_PREFIX })
 await fastify.register(usersRoutes, { prefix: API_PREFIX })
 await fastify.register(postsRoutes, { prefix: API_PREFIX })
+await fastify.register(storiesRoutes, { prefix: API_PREFIX })
 await fastify.register(marketRoutes, { prefix: API_PREFIX })
 await fastify.register(aiRoutes, { prefix: API_PREFIX })
 await fastify.register(weatherRoutes, { prefix: API_PREFIX })

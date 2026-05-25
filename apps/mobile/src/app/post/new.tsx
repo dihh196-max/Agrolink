@@ -10,31 +10,42 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useCreatePost } from '../../hooks/useFeed.js'
 import { useAuthStore } from '../../store/auth.js'
+import { choosePhotoSource } from '../../lib/media.js'
 import { colors, spacing, typography, borderRadius } from '../../constants/theme.js'
 
 export default function NewPostScreen() {
   const [content, setContent] = useState('')
   const [tagsRaw, setTagsRaw] = useState('')
+  const [photo, setPhoto] = useState<string | null>(null)
   const user = useAuthStore((s) => s.user)
   const create = useCreatePost()
 
+  const handleAddPhoto = async () => {
+    const uri = await choosePhotoSource()
+    if (uri) setPhoto(uri)
+  }
+
+  const canPost = !!content.trim() || !!photo
+
   const handlePost = async () => {
-    if (!content.trim()) {
-      Alert.alert('Atenção', 'Escreva algo para publicar')
+    if (!canPost) {
+      Alert.alert('Atenção', 'Escreva algo ou adicione uma foto para publicar')
       return
     }
     const tags = tagsRaw
       .split(',')
       .map((t) => t.trim().replace(/^#/, ''))
       .filter(Boolean)
+    const media = photo ? [{ type: 'image', url: photo }] : []
     try {
-      await create.mutateAsync({ content: content.trim(), tags } as any)
+      await create.mutateAsync({ content: content.trim(), tags, media } as any)
       router.back()
     } catch {
       Alert.alert('Erro', 'Não foi possível publicar. Tente novamente.')
@@ -54,9 +65,9 @@ export default function NewPostScreen() {
           </TouchableOpacity>
           <Text style={styles.title}>Nova publicação</Text>
           <TouchableOpacity
-            style={[styles.postBtn, !content.trim() && styles.postBtnDisabled]}
+            style={[styles.postBtn, !canPost && styles.postBtnDisabled]}
             onPress={handlePost}
-            disabled={!content.trim() || create.isPending}
+            disabled={!canPost || create.isPending}
           >
             {create.isPending ? (
               <ActivityIndicator color={colors.white} size="small" />
@@ -93,6 +104,24 @@ export default function NewPostScreen() {
             autoFocus
             textAlignVertical="top"
           />
+
+          {/* Photo preview */}
+          {photo && (
+            <View style={styles.photoWrap}>
+              <Image source={{ uri: photo }} style={styles.photoPreview} resizeMode="cover" />
+              <TouchableOpacity style={styles.removePhoto} onPress={() => setPhoto(null)}>
+                <Ionicons name="close-circle" size={28} color={colors.white} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Media actions */}
+          <View style={styles.mediaActions}>
+            <TouchableOpacity style={styles.mediaBtn} onPress={handleAddPhoto}>
+              <Ionicons name="image-outline" size={22} color={colors.primary} />
+              <Text style={styles.mediaBtnText}>{photo ? 'Trocar foto' : 'Adicionar foto'}</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Tags */}
           <View style={styles.tagsSection}>
@@ -176,6 +205,21 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   tagsInput: { ...typography.bodySmall, color: colors.text, flex: 1 },
+  photoWrap: { marginHorizontal: spacing.md, marginTop: spacing.sm, position: 'relative' },
+  photoPreview: { width: '100%', height: 220, borderRadius: borderRadius.md, backgroundColor: colors.surfaceSecondary },
+  removePhoto: { position: 'absolute', top: spacing.sm, right: spacing.sm },
+  mediaActions: { flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.md, marginTop: spacing.sm },
+  mediaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  mediaBtnText: { ...typography.label, color: colors.primary },
   charCount: { ...typography.caption, color: colors.textMuted, textAlign: 'right', paddingHorizontal: spacing.md, marginTop: spacing.xs },
   charCountWarn: { color: colors.error },
 })
