@@ -14,6 +14,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
 import {
   useMarketPrices,
   usePriceAlerts,
@@ -154,7 +155,11 @@ function PriceCard({ price, onAlertPress }: { price: MarketPrice; onAlertPress: 
   const unitLabel = price.unit === 'saca_60kg' ? '/sc' : price.unit === 'arroba' ? '/@' : '/t'
 
   return (
-    <View style={styles.priceCard}>
+    <TouchableOpacity
+      style={styles.priceCard}
+      onPress={() => router.push(`/market/${price.culture}` as any)}
+      activeOpacity={0.75}
+    >
       <View style={styles.priceHeader}>
         <Text style={styles.cultureIcon}>{CULTURE_ICONS[price.culture] ?? '📊'}</Text>
         <View style={{ flex: 1 }}>
@@ -188,14 +193,20 @@ function PriceCard({ price, onAlertPress }: { price: MarketPrice; onAlertPress: 
 
       <View style={styles.priceFooter}>
         <Text style={styles.updatedAt}>
-          Atualizado: {new Date(price.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          {new Date(price.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
         </Text>
-        <TouchableOpacity style={styles.alertBtn} onPress={() => onAlertPress(price)}>
-          <Ionicons name="notifications-outline" size={14} color={colors.primary} />
-          <Text style={styles.alertBtnText}>Criar alerta</Text>
-        </TouchableOpacity>
+        <View style={styles.priceFooterRight}>
+          <TouchableOpacity style={styles.alertBtn} onPress={(e) => { e.stopPropagation?.(); onAlertPress(price) }}>
+            <Ionicons name="notifications-outline" size={14} color={colors.primary} />
+            <Text style={styles.alertBtnText}>Alerta</Text>
+          </TouchableOpacity>
+          <View style={styles.detailHint}>
+            <Text style={styles.detailHintText}>Ver detalhes</Text>
+            <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+          </View>
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   )
 }
 
@@ -396,8 +407,11 @@ const styles = StyleSheet.create({
   priceUnit: { ...typography.body, color: colors.textSecondary },
   priceFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.sm },
   updatedAt: { ...typography.caption, color: colors.textMuted },
+  priceFooterRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   alertBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   alertBtnText: { ...typography.caption, color: colors.primary, fontWeight: '600' },
+  detailHint: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  detailHintText: { ...typography.caption, color: colors.textMuted },
   alertRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     backgroundColor: colors.white, borderRadius: borderRadius.lg, padding: spacing.md, ...shadows.sm,
