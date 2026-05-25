@@ -6,6 +6,7 @@ import rateLimit from '@fastify/rate-limit'
 import fp from 'fastify-plugin'
 import { createDatabase } from '@agrolink/database'
 import { env } from './lib/env.js'
+import { collectPrices } from './lib/collect-prices.js'
 import authPlugin from './plugins/auth.js'
 import { authRoutes } from './routes/auth.js'
 import { postsRoutes } from './routes/posts.js'
@@ -74,6 +75,11 @@ fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOS
 try {
   await fastify.listen({ port: env.PORT, host: '0.0.0.0' })
   console.log(`AgroLink API running on port ${env.PORT}`)
+
+  // Start price collection: immediately on boot, then every 15 minutes
+  collectPrices(db).catch((e) => console.error('[prices] initial collect failed:', e))
+  setInterval(() => collectPrices(db).catch((e) => console.error('[prices] collect failed:', e)), 15 * 60 * 1000)
+  console.log('[prices] Scheduler started — updating every 15 min')
 } catch (err) {
   fastify.log.error(err)
   process.exit(1)
