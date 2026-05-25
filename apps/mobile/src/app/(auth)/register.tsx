@@ -194,7 +194,7 @@ export default function RegisterScreen() {
             <>
               <Field label="Nome completo" error={errors.name}>
                 <TextInput
-                  style={[s.input, errors.name && s.inputErr]}
+                  style={[s.input, !!errors.name && s.inputErr]}
                   placeholder="Seu nome completo"
                   placeholderTextColor={colors.textMuted}
                   value={form.name}
@@ -205,7 +205,7 @@ export default function RegisterScreen() {
 
               <Field label="Email" error={errors.email}>
                 <TextInput
-                  style={[s.input, errors.email && s.inputErr]}
+                  style={[s.input, !!errors.email && s.inputErr]}
                   placeholder="seu@email.com"
                   placeholderTextColor={colors.textMuted}
                   value={form.email}
@@ -216,7 +216,7 @@ export default function RegisterScreen() {
               </Field>
 
               <Field label="Senha" error={errors.password}>
-                <View style={[s.inputRow, errors.password && s.inputRowErr]}>
+                <View style={[s.inputRow, !!errors.password && s.inputRowErr]}>
                   <TextInput
                     style={s.inputFlex}
                     placeholder="Mínimo 8 caracteres"
@@ -246,7 +246,7 @@ export default function RegisterScreen() {
               </Field>
 
               <Field label="Confirmar senha" error={errors.confirmPassword}>
-                <View style={[s.inputRow, errors.confirmPassword && s.inputRowErr]}>
+                <View style={[s.inputRow, !!errors.confirmPassword && s.inputRowErr]}>
                   <TextInput
                     style={s.inputFlex}
                     placeholder="Repita sua senha"
@@ -271,7 +271,7 @@ export default function RegisterScreen() {
           {step === 2 && (
             <>
               <Field label="Nome de usuário" error={errors.username}>
-                <View style={[s.inputRow, errors.username && s.inputRowErr]}>
+                <View style={[s.inputRow, !!errors.username && s.inputRowErr]}>
                   <TextInput
                     style={s.inputFlex}
                     placeholder="letras minúsculas, números e _"
@@ -290,7 +290,7 @@ export default function RegisterScreen() {
 
               <Field label="Telefone (WhatsApp)" error={errors.phone}>
                 <TextInput
-                  style={[s.input, errors.phone && s.inputErr]}
+                  style={[s.input, !!errors.phone && s.inputErr]}
                   placeholder="(XX) X XXXX-XXXX"
                   placeholderTextColor={colors.textMuted}
                   value={form.phone}
