@@ -19,6 +19,17 @@ const cultureValues = [
 export const marketRoutes: FastifyPluginAsync = async (fastify) => {
   const db = fastify.db
 
+  // Trigger immediate price refresh (admin/debug)
+  fastify.post('/market/prices/refresh', { onRequest: [fastify.authenticate] }, async (_req, reply) => {
+    try {
+      const { priceQueue } = await import('../workers/price-collector.js')
+      await priceQueue.add('collect', {})
+      return reply.code(202).send({ message: 'Coleta de preços agendada' })
+    } catch {
+      return reply.code(500).send({ error: 'Não foi possível agendar a coleta' })
+    }
+  })
+
   // Latest prices for all cultures
   fastify.get('/market/prices', { onRequest: [fastify.authenticate] }, async () => {
     const rows = await db

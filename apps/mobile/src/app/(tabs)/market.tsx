@@ -159,7 +159,9 @@ function PriceCard({ price, onAlertPress }: { price: MarketPrice; onAlertPress: 
         <Text style={styles.cultureIcon}>{CULTURE_ICONS[price.culture] ?? '📊'}</Text>
         <View style={{ flex: 1 }}>
           <Text style={styles.cultureName}>{CULTURE_LABELS[price.culture]}</Text>
-          <Text style={styles.priceSource}>{price.source} • ESALQ</Text>
+          <Text style={styles.priceSource}>
+            {price.source === 'B3' ? 'CBOT/ICE/CME → BRL' : price.source === 'CEPEA' ? 'CEPEA/ESALQ' : 'Preço Indicativo'}
+          </Text>
         </View>
         <View style={[styles.variationBadge, { backgroundColor: isPositive ? '#dcfce7' : '#fee2e2' }]}>
           <Ionicons
@@ -293,8 +295,8 @@ export default function MarketScreen() {
             refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />}
           >
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Cotações CEPEA/ESALQ</Text>
-              <Text style={styles.sectionSubtitle}>Atualizado a cada 15 min • Toque para criar alertas</Text>
+              <Text style={styles.sectionTitle}>Cotações em Tempo Real</Text>
+              <Text style={styles.sectionSubtitle}>CBOT/ICE/CME convertido para BRL • Atualizado a cada 15 min</Text>
             </View>
             {(prices ?? []).map((p) => (
               <PriceCard key={p.id} price={p} onAlertPress={setAlertTarget} />
