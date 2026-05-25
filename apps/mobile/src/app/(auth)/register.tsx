@@ -76,6 +76,7 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false)
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
   const usernameTimer = useRef<ReturnType<typeof setTimeout>>()
+  const scrollRef = useRef<ScrollView>(null)
 
   const register = useAuthStore((s) => s.register)
 
@@ -123,8 +124,11 @@ export default function RegisterScreen() {
     if (!form.username || form.username.length < 3) e.username = 'Mínimo 3 caracteres'
     if (usernameStatus === 'taken') e.username = 'Nome de usuário já está em uso'
     if (!form.phone || form.phone.replace(/\D/g, '').length < 10) e.phone = 'Telefone inválido'
-    if (!form.acceptedTerms) e.acceptedTerms = 'Você deve aceitar os termos para continuar'
+    if (!form.acceptedTerms) e.acceptedTerms = 'Marque a caixa abaixo para aceitar os termos'
     setErrors(e)
+    if (e.acceptedTerms) {
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)
+    }
     return Object.keys(e).length === 0
   }
 
@@ -174,7 +178,7 @@ export default function RegisterScreen() {
 
   return (
     <LinearGradient colors={[colors.primaryDark, colors.primary]} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={s.container} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} contentContainerStyle={s.container} keyboardShouldPersistTaps="handled">
         <Text style={s.logo}>🌱 AgroLink</Text>
         <Text style={s.tagline}>Crie sua conta gratuitamente</Text>
 
@@ -316,20 +320,29 @@ export default function RegisterScreen() {
               </View>
 
               <TouchableOpacity
-                style={s.termsRow}
+                style={[s.termsBox, !!errors.acceptedTerms && s.termsBoxErr]}
                 onPress={() => set('acceptedTerms')(!form.acceptedTerms)}
+                activeOpacity={0.8}
               >
                 <View style={[s.checkbox, form.acceptedTerms && s.checkboxOn]}>
                   {form.acceptedTerms && <Text style={s.checkmark}>✓</Text>}
                 </View>
-                <Text style={s.termsTxt}>
-                  Li e aceito os{' '}
-                  <Text style={{ color: colors.primary, fontWeight: '600' }}>Termos de Uso</Text>
-                  {' '}e a{' '}
-                  <Text style={{ color: colors.primary, fontWeight: '600' }}>Política de Privacidade</Text>
-                </Text>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={[s.termsTxt, { fontWeight: '600', color: colors.text }]}>
+                    Aceitar Termos de Uso *
+                  </Text>
+                  <Text style={s.termsTxt}>
+                    Li e aceito os{' '}
+                    <Text style={{ color: colors.primary, fontWeight: '600' }}>Termos de Uso</Text>
+                    {' '}e a{' '}
+                    <Text style={{ color: colors.primary, fontWeight: '600' }}>Política de Privacidade</Text>
+                    {' '}do AgroLink
+                  </Text>
+                </View>
               </TouchableOpacity>
-              {errors.acceptedTerms && <Text style={s.errTxt}>{errors.acceptedTerms}</Text>}
+              {!!errors.acceptedTerms && (
+                <Text style={s.errTxt}>⚠️ {errors.acceptedTerms}</Text>
+              )}
 
               <View style={s.rowBtns}>
                 <TouchableOpacity style={s.backBtn} onPress={() => setStep(1)}>
@@ -418,14 +431,25 @@ const s = StyleSheet.create({
   roleBtnActive: { borderColor: colors.primary, backgroundColor: colors.surfaceSecondary },
   roleTxt: { ...typography.bodySmall, color: colors.textSecondary, textAlign: 'center' },
   roleTxtActive: { color: colors.primary, fontWeight: '600' },
-  termsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  termsBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceSecondary,
+    padding: spacing.md,
+  },
+  termsBoxErr: { borderColor: colors.error, backgroundColor: '#fff5f5' },
   checkbox: {
-    width: 22, height: 22, borderWidth: 2, borderColor: colors.border,
-    borderRadius: 4, alignItems: 'center', justifyContent: 'center', marginTop: 1,
+    width: 28, height: 28, borderWidth: 2.5, borderColor: colors.primary,
+    borderRadius: 6, alignItems: 'center', justifyContent: 'center', marginTop: 2,
+    flexShrink: 0,
   },
   checkboxOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  checkmark: { color: colors.white, fontSize: 14, fontWeight: '700' },
-  termsTxt: { ...typography.bodySmall, color: colors.textSecondary, flex: 1 },
+  checkmark: { color: colors.white, fontSize: 16, fontWeight: '700' },
+  termsTxt: { ...typography.bodySmall, color: colors.textSecondary },
   rowBtns: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   backBtn: {
     borderWidth: 1.5, borderColor: colors.border, borderRadius: borderRadius.md,
