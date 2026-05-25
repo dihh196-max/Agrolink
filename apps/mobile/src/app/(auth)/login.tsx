@@ -18,6 +18,7 @@ import { colors, spacing, typography, borderRadius } from '../../constants/theme
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const login = useAuthStore((s) => s.login)
 
@@ -30,53 +31,66 @@ export default function LoginScreen() {
     try {
       await login(email.toLowerCase().trim(), password)
       router.replace('/(tabs)/feed')
-    } catch {
-      Alert.alert('Erro', 'Email ou senha incorretos')
+    } catch (e: any) {
+      const msg = e.response?.data?.error ?? 'Email ou senha incorretos'
+      Alert.alert('Erro', msg)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <LinearGradient colors={[colors.primaryDark, colors.primary, colors.primaryLight]} style={styles.gradient}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.logo}>🌱 AgroLink</Text>
-          <Text style={styles.tagline}>A rede social do campo</Text>
+    <LinearGradient colors={[colors.primaryDark, colors.primary, colors.primaryLight]} style={s.gradient}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.container}>
+        <View style={s.header}>
+          <Text style={s.logo}>🌱 AgroLink</Text>
+          <Text style={s.tagline}>A rede social do campo</Text>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.title}>Entrar</Text>
+        <View style={s.card}>
+          <Text style={s.title}>Entrar</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor={colors.textMuted}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+          <View style={{ gap: 4 }}>
+            <Text style={s.fieldLabel}>Email</Text>
+            <TextInput
+              style={s.input}
+              placeholder="seu@email.com"
+              placeholderTextColor={colors.textMuted}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            placeholderTextColor={colors.textMuted}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={{ gap: 4 }}>
+            <Text style={s.fieldLabel}>Senha</Text>
+            <View style={s.inputRow}>
+              <TextInput
+                style={s.inputFlex}
+                placeholder="Sua senha"
+                placeholderTextColor={colors.textMuted}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPw}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity onPress={() => setShowPw((v) => !v)} style={s.eyeBtn}>
+                <Text style={s.eyeIcon}>{showPw ? '🙈' : '👁️'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.buttonText}>Entrar</Text>
-            )}
+          <TouchableOpacity onPress={() => Alert.alert('Recuperar senha', 'Entre em contato pelo email suporte@agrolink.com.br')} style={s.forgotRow}>
+            <Text style={s.forgotTxt}>Esqueci minha senha</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.btn} onPress={handleLogin} disabled={loading}>
+            {loading ? <ActivityIndicator color={colors.white} /> : <Text style={s.btnText}>Entrar</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.link}>Não tem conta? Cadastre-se</Text>
+            <Text style={s.link}>Não tem conta? Cadastre-se grátis</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -84,19 +98,15 @@ export default function LoginScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   gradient: { flex: 1 },
   container: { flex: 1, justifyContent: 'center', padding: spacing.lg },
   header: { alignItems: 'center', marginBottom: spacing.xl },
   logo: { fontSize: 36, fontWeight: '800', color: colors.white, marginBottom: spacing.xs },
   tagline: { ...typography.body, color: 'rgba(255,255,255,0.8)' },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    padding: spacing.xl,
-    gap: spacing.md,
-  },
-  title: { ...typography.h2, color: colors.text, marginBottom: spacing.sm },
+  card: { backgroundColor: colors.white, borderRadius: borderRadius.lg, padding: spacing.xl, gap: spacing.md },
+  title: { ...typography.h2, color: colors.text, marginBottom: spacing.xs },
+  fieldLabel: { ...typography.label, color: colors.textSecondary },
   input: {
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -106,13 +116,21 @@ const styles = StyleSheet.create({
     color: colors.text,
     backgroundColor: colors.background,
   },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+  inputRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.background,
+    overflow: 'hidden',
   },
-  buttonText: { ...typography.h4, color: colors.white },
-  link: { ...typography.body, color: colors.primary, textAlign: 'center', marginTop: spacing.sm },
+  inputFlex: { flex: 1, padding: spacing.md, ...typography.body, color: colors.text },
+  eyeBtn: { width: 48, alignItems: 'center', justifyContent: 'center' },
+  eyeIcon: { fontSize: 18 },
+  forgotRow: { alignSelf: 'flex-end', marginTop: -spacing.xs },
+  forgotTxt: { ...typography.bodySmall, color: colors.primary },
+  btn: { backgroundColor: colors.primary, borderRadius: borderRadius.md, padding: spacing.md, alignItems: 'center' },
+  btnText: { ...typography.h4, color: colors.white },
+  link: { ...typography.body, color: colors.primary, textAlign: 'center' },
 })

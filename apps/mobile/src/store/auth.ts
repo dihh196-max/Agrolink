@@ -20,6 +20,8 @@ interface RegisterData {
   username: string
   password: string
   role?: 'producer' | 'supplier' | 'technician' | 'cooperative'
+  bio?: string
+  acceptedTerms: true
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
