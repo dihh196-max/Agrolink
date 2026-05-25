@@ -17,7 +17,6 @@
       "bundleIdentifier": "com.agrolink.app",
       "infoPlist": {
         "NSCameraUsageDescription": "Para fotografar sua lavoura",
-        "NSLocationWhenInUseUsageDescription": "Para dados de clima e ofertas próximas",
         "NSMicrophoneUsageDescription": "Para gravar vídeos da lavoura"
       }
     },
@@ -29,21 +28,12 @@
       "package": "com.agrolink.app",
       "permissions": [
         "CAMERA",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
       ]
     },
     "plugins": [
       "expo-router",
-      "expo-notifications",
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Necessário para clima e ofertas na sua região"
-        }
-      ],
       [
         "expo-build-properties",
         {
