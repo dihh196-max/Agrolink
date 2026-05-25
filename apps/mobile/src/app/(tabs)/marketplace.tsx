@@ -7,8 +7,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useMarketplace } from '../../hooks/useSocial.js'
+import { useMarketplace, useStartConversation } from '../../hooks/useSocial.js'
 import { api } from '../../lib/api.js'
+import { router } from 'expo-router'
 import { choosePhotoSource } from '../../lib/media.js'
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme.js'
 import type { MarketplaceProduct } from '@agrolink/types'
@@ -49,8 +50,20 @@ function ProductDetailModal({
   product: MarketplaceProduct | null
   onClose: () => void
 }) {
+  const startConversation = useStartConversation()
   if (!product) return null
   const seller = (product as any).seller
+
+  const handleMessage = async () => {
+    if (!seller?.id) { Alert.alert('Indisponível', 'Vendedor sem conta ativa.'); return }
+    try {
+      const thread = await startConversation.mutateAsync(seller.id)
+      onClose()
+      router.push(`/chat/${thread.id}`)
+    } catch {
+      Alert.alert('Erro', 'Não foi possível iniciar a conversa.')
+    }
+  }
   const icon = CATEGORY_ICONS[product.category] ?? '📦'
   const hasPhoto = product.images?.[0]
 
@@ -103,15 +116,24 @@ function ProductDetailModal({
             {seller && (
               <View style={det.section}>
                 <Text style={det.sectionTitle}>Vendedor</Text>
-                <View style={det.sellerRow}>
-                  <View style={det.sellerAvatar}>
-                    <Text style={det.sellerAvatarText}>{seller.name?.[0]?.toUpperCase() ?? '?'}</Text>
-                  </View>
-                  <View>
+                <TouchableOpacity
+                  style={det.sellerRow}
+                  onPress={() => { onClose(); router.push(`/profile/${seller.username}`) }}
+                  activeOpacity={0.8}
+                >
+                  {seller.avatarUrl ? (
+                    <Image source={{ uri: seller.avatarUrl }} style={det.sellerAvatarImg} />
+                  ) : (
+                    <View style={det.sellerAvatar}>
+                      <Text style={det.sellerAvatarText}>{seller.name?.[0]?.toUpperCase() ?? '?'}</Text>
+                    </View>
+                  )}
+                  <View style={{ flex: 1 }}>
                     <Text style={det.sellerName}>{seller.name}</Text>
                     <Text style={det.sellerRole}>@{seller.username}</Text>
                   </View>
-                </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
               </View>
             )}
 
@@ -125,11 +147,17 @@ function ProductDetailModal({
 
             <View style={det.actionsRow}>
               <TouchableOpacity
-                style={det.msgBtn}
-                onPress={() => Alert.alert('Em breve', 'Chat direto com o vendedor em breve!')}
+                style={[det.msgBtn, startConversation.isPending && { opacity: 0.6 }]}
+                onPress={handleMessage}
+                disabled={startConversation.isPending}
               >
-                <Ionicons name="chatbubble-outline" size={18} color={colors.white} />
-                <Text style={det.msgBtnText}>Enviar Mensagem</Text>
+                {startConversation.isPending
+                  ? <ActivityIndicator size="small" color={colors.white} />
+                  : <Ionicons name="chatbubble-outline" size={18} color={colors.white} />
+                }
+                <Text style={det.msgBtnText}>
+                  {startConversation.isPending ? 'Abrindo...' : 'Enviar Mensagem'}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={det.phoneBtn}
@@ -501,6 +529,7 @@ const det = StyleSheet.create({
   description: { ...typography.body, color: colors.text, lineHeight: 24 },
   sellerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surfaceSecondary, padding: spacing.md, borderRadius: borderRadius.lg },
   sellerAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
+  sellerAvatarImg: { width: 44, height: 44, borderRadius: 22 },
   sellerAvatarText: { ...typography.h4, color: colors.white },
   sellerName: { ...typography.label, color: colors.text },
   sellerRole: { ...typography.caption, color: colors.textMuted },
