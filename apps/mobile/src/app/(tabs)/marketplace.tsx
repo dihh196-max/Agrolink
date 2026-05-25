@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator,
-  RefreshControl, Alert, Modal, ScrollView, TextInput, KeyboardAvoidingView, Platform,
+  RefreshControl, Alert, Modal, ScrollView, TextInput, KeyboardAvoidingView,
+  Platform, Image,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMarketplace } from '../../hooks/useSocial.js'
 import { api } from '../../lib/api.js'
+import { choosePhotoSource } from '../../lib/media.js'
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme.js'
 import type { MarketplaceProduct } from '@agrolink/types'
 
@@ -38,6 +40,113 @@ function usePostProduct() {
   })
 }
 
+// ─── Product detail modal ─────────────────────────────────────────────────────
+
+function ProductDetailModal({
+  product,
+  onClose,
+}: {
+  product: MarketplaceProduct | null
+  onClose: () => void
+}) {
+  if (!product) return null
+  const seller = (product as any).seller
+  const icon = CATEGORY_ICONS[product.category] ?? '📦'
+  const hasPhoto = product.images?.[0]
+
+  return (
+    <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaView style={det.container} edges={['top']}>
+        <View style={det.header}>
+          <TouchableOpacity onPress={onClose} style={det.closeBtn}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={det.headerTitle} numberOfLines={1}>{product.name}</Text>
+          <View style={{ width: 32 }} />
+        </View>
+
+        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+          {hasPhoto ? (
+            <Image source={{ uri: product.images[0] }} style={det.heroImage} resizeMode="cover" />
+          ) : (
+            <View style={det.heroPlaceholder}>
+              <Text style={det.heroIcon}>{icon}</Text>
+            </View>
+          )}
+
+          <View style={det.body}>
+            <View style={det.topRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={det.name}>{product.name}</Text>
+                <View style={det.catBadge}>
+                  <Text style={det.catBadgeText}>{icon} {CATEGORY_LABELS[product.category] ?? product.category}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={det.priceBox}>
+              <Text style={det.priceLabel}>Preço</Text>
+              <Text style={det.price}>
+                R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <Text style={det.unit}> / {product.unit}</Text>
+              </Text>
+              {product.stock != null && (
+                <Text style={det.stock}>{product.stock.toLocaleString('pt-BR')} unidades disponíveis</Text>
+              )}
+            </View>
+
+            <View style={det.section}>
+              <Text style={det.sectionTitle}>Descrição</Text>
+              <Text style={det.description}>{product.description}</Text>
+            </View>
+
+            {seller && (
+              <View style={det.section}>
+                <Text style={det.sectionTitle}>Vendedor</Text>
+                <View style={det.sellerRow}>
+                  <View style={det.sellerAvatar}>
+                    <Text style={det.sellerAvatarText}>{seller.name?.[0]?.toUpperCase() ?? '?'}</Text>
+                  </View>
+                  <View>
+                    <Text style={det.sellerName}>{seller.name}</Text>
+                    <Text style={det.sellerRole}>@{seller.username}</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            <View style={det.locationRow}>
+              <Ionicons name="location-outline" size={16} color={colors.primary} />
+              <Text style={det.locationText}>
+                {product.city}/{product.state}
+                {product.distanceKm != null ? ` · ${product.distanceKm} km de distância` : ''}
+              </Text>
+            </View>
+
+            <View style={det.actionsRow}>
+              <TouchableOpacity
+                style={det.msgBtn}
+                onPress={() => Alert.alert('Em breve', 'Chat direto com o vendedor em breve!')}
+              >
+                <Ionicons name="chatbubble-outline" size={18} color={colors.white} />
+                <Text style={det.msgBtnText}>Enviar Mensagem</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={det.phoneBtn}
+                onPress={() => Alert.alert('Em breve', 'Contato por telefone em breve!')}
+              >
+                <Ionicons name="call-outline" size={18} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  )
+}
+
+// ─── Post product modal ───────────────────────────────────────────────────────
+
 function PostProductModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const postProduct = usePostProduct()
   const [name, setName] = useState('')
@@ -48,11 +157,12 @@ function PostProductModal({ visible, onClose }: { visible: boolean; onClose: () 
   const [stock, setStock] = useState('')
   const [city, setCity] = useState('')
   const [state, setState] = useState('MT')
+  const [photo, setPhoto] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
   const reset = () => {
     setName(''); setDescription(''); setCategory('seeds'); setPrice('')
-    setUnit(''); setStock(''); setCity(''); setState('MT'); setSuccess(false)
+    setUnit(''); setStock(''); setCity(''); setState('MT'); setPhoto(null); setSuccess(false)
   }
 
   const handleClose = () => { reset(); onClose() }
@@ -65,6 +175,7 @@ function PostProductModal({ visible, onClose }: { visible: boolean; onClose: () 
     postProduct.mutate({
       name: name.trim(), description: description.trim(), category,
       price: Number(price), unit: unit.trim(), city: city.trim(), state,
+      images: photo ? [photo] : [],
       ...(stock && { stock: Number(stock) }),
     }, {
       onSuccess: () => setSuccess(true),
@@ -94,6 +205,27 @@ function PostProductModal({ visible, onClose }: { visible: boolean; onClose: () 
         ) : (
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
             <ScrollView style={mStyles.form} contentContainerStyle={{ paddingBottom: 40 }}>
+              {/* Photo picker */}
+              <Text style={mStyles.fieldLabel}>Foto do produto</Text>
+              <TouchableOpacity style={mStyles.photoBtn} onPress={async () => {
+                const uri = await choosePhotoSource()
+                if (uri) setPhoto(uri)
+              }}>
+                {photo ? (
+                  <Image source={{ uri: photo }} style={mStyles.photoPreview} resizeMode="cover" />
+                ) : (
+                  <View style={mStyles.photoPlaceholder}>
+                    <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
+                    <Text style={mStyles.photoPlaceholderText}>Toque para adicionar foto</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              {photo && (
+                <TouchableOpacity onPress={() => setPhoto(null)} style={mStyles.removePhoto}>
+                  <Text style={mStyles.removePhotoText}>Remover foto</Text>
+                </TouchableOpacity>
+              )}
+
               <Text style={mStyles.fieldLabel}>Nome do produto *</Text>
               <TextInput style={mStyles.input} value={name} onChangeText={setName}
                 placeholder="Ex: Semente de Soja TMG 7062" placeholderTextColor={colors.textMuted} />
@@ -159,12 +291,22 @@ function PostProductModal({ visible, onClose }: { visible: boolean; onClose: () 
   )
 }
 
+// ─── Product card ─────────────────────────────────────────────────────────────
+
 function ProductCard({ product, onPress }: { product: MarketplaceProduct; onPress: () => void }) {
   const icon = CATEGORY_ICONS[product.category] ?? '📦'
   const seller = (product as any).seller
+  const hasPhoto = product.images?.[0]
+
   return (
     <TouchableOpacity style={[styles.productCard, shadows.sm]} onPress={onPress} activeOpacity={0.85}>
-      <View style={styles.productImage}><Text style={styles.productIcon}>{icon}</Text></View>
+      {hasPhoto ? (
+        <Image source={{ uri: product.images[0] }} style={styles.productImage} resizeMode="cover" />
+      ) : (
+        <View style={styles.productImagePlaceholder}>
+          <Text style={styles.productIcon}>{icon}</Text>
+        </View>
+      )}
       <View style={styles.productInfo}>
         <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
         <Text style={styles.productDesc} numberOfLines={2}>{product.description}</Text>
@@ -176,10 +318,15 @@ function ProductCard({ product, onPress }: { product: MarketplaceProduct; onPres
           {seller?.name && <Text style={styles.sellerName} numberOfLines={1}>{seller.name}</Text>}
           <View style={styles.locationPill}>
             <Ionicons name="location-outline" size={11} color={colors.primary} />
-            <Text style={styles.locationText}>{product.city}/{product.state}{product.distanceKm != null ? ` · ${product.distanceKm} km` : ''}</Text>
+            <Text style={styles.locationText}>
+              {product.city}/{product.state}
+              {product.distanceKm != null ? ` · ${product.distanceKm} km` : ''}
+            </Text>
           </View>
         </View>
-        {product.stock != null && <Text style={styles.stock}>{product.stock.toLocaleString('pt-BR')} disponíveis</Text>}
+        {product.stock != null && (
+          <Text style={styles.stock}>{product.stock.toLocaleString('pt-BR')} disponíveis</Text>
+        )}
       </View>
       <TouchableOpacity style={styles.contactBtn} onPress={onPress}>
         <Text style={styles.contactBtnText}>Ver Produto</Text>
@@ -188,23 +335,18 @@ function ProductCard({ product, onPress }: { product: MarketplaceProduct; onPres
   )
 }
 
+// ─── Main screen ──────────────────────────────────────────────────────────────
+
 export default function MarketplaceScreen() {
   const [category, setCategory] = useState('all')
   const [showPost, setShowPost] = useState(false)
+  const [selected, setSelected] = useState<MarketplaceProduct | null>(null)
   const { data: products, isLoading, refetch } = useMarketplace(category)
-
-  const handleProductPress = (p: MarketplaceProduct) => {
-    const seller = (p as any).seller
-    Alert.alert(
-      p.name,
-      `Vendedor: ${seller?.name ?? '—'}\nLocalização: ${p.city}/${p.state}\nPreço: R$ ${p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} por ${p.unit}${p.stock != null ? `\nEstoque: ${p.stock}` : ''}`,
-      [{ text: 'Fechar', style: 'cancel' }, { text: 'Enviar Mensagem', onPress: () => Alert.alert('Em breve', 'Integração com mensagens') }]
-    )
-  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <PostProductModal visible={showPost} onClose={() => setShowPost(false)} />
+      {selected && <ProductDetailModal product={selected} onClose={() => setSelected(null)} />}
 
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -254,7 +396,7 @@ export default function MarketplaceScreen() {
           numColumns={2}
           columnWrapperStyle={styles.row}
           refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} colors={[colors.primary]} />}
-          renderItem={({ item }) => <ProductCard product={item} onPress={() => handleProductPress(item)} />}
+          renderItem={({ item }) => <ProductCard product={item} onPress={() => setSelected(item)} />}
         />
       )}
 
@@ -264,6 +406,8 @@ export default function MarketplaceScreen() {
     </SafeAreaView>
   )
 }
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const CARD_WIDTH = '48%'
 
@@ -283,7 +427,8 @@ const styles = StyleSheet.create({
   list: { padding: spacing.md, paddingBottom: 100 },
   row: { justifyContent: 'space-between', marginBottom: spacing.md },
   productCard: { width: CARD_WIDTH, backgroundColor: colors.surface, borderRadius: borderRadius.lg, overflow: 'hidden' },
-  productImage: { height: 90, backgroundColor: colors.surfaceSecondary, justifyContent: 'center', alignItems: 'center' },
+  productImage: { width: '100%', height: 110 },
+  productImagePlaceholder: { height: 90, backgroundColor: colors.surfaceSecondary, justifyContent: 'center', alignItems: 'center' },
   productIcon: { fontSize: 36 },
   productInfo: { padding: spacing.sm + 2 },
   productName: { ...typography.h4, color: colors.text, fontSize: 13, lineHeight: 18 },
@@ -319,10 +464,50 @@ const mStyles = StyleSheet.create({
   catChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   catChipText: { ...typography.label, color: colors.textSecondary },
   catChipTextActive: { color: colors.white },
+  photoBtn: { borderRadius: borderRadius.md, overflow: 'hidden', borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed', backgroundColor: colors.surfaceSecondary },
+  photoPreview: { width: '100%', height: 180 },
+  photoPlaceholder: { height: 120, justifyContent: 'center', alignItems: 'center', gap: spacing.xs },
+  photoPlaceholderText: { ...typography.bodySmall, color: colors.textMuted },
+  removePhoto: { marginTop: spacing.xs, alignSelf: 'flex-end' },
+  removePhotoText: { ...typography.caption, color: colors.error },
   submitBtn: { backgroundColor: colors.primary, borderRadius: borderRadius.lg, paddingVertical: spacing.md, alignItems: 'center', marginTop: spacing.xl },
   submitBtnText: { ...typography.h4, color: colors.white },
   successContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl, gap: spacing.md },
   successIcon: { fontSize: 56 },
   successTitle: { ...typography.h2, color: colors.text },
   successSub: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
+})
+
+const det = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: spacing.sm, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
+  headerTitle: { ...typography.h4, color: colors.text, flex: 1, textAlign: 'center' },
+  closeBtn: { padding: spacing.xs },
+  heroImage: { width: '100%', height: 260 },
+  heroPlaceholder: { height: 180, backgroundColor: colors.surfaceSecondary, justifyContent: 'center', alignItems: 'center' },
+  heroIcon: { fontSize: 72 },
+  body: { padding: spacing.lg, gap: spacing.md },
+  topRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  name: { ...typography.h2, color: colors.text, marginBottom: spacing.xs },
+  catBadge: { alignSelf: 'flex-start', backgroundColor: colors.surfaceSecondary, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: borderRadius.full, borderWidth: 1, borderColor: colors.border },
+  catBadgeText: { ...typography.caption, color: colors.primary, fontWeight: '600' as const },
+  priceBox: { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  priceLabel: { ...typography.caption, color: colors.textMuted, marginBottom: 2 },
+  price: { fontSize: 28, fontWeight: '700' as const, color: colors.primary },
+  unit: { fontSize: 16, fontWeight: '400' as const, color: colors.textMuted },
+  stock: { ...typography.bodySmall, color: colors.success, marginTop: spacing.xs },
+  section: { gap: spacing.xs },
+  sectionTitle: { ...typography.label, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  description: { ...typography.body, color: colors.text, lineHeight: 24 },
+  sellerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surfaceSecondary, padding: spacing.md, borderRadius: borderRadius.lg },
+  sellerAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
+  sellerAvatarText: { ...typography.h4, color: colors.white },
+  sellerName: { ...typography.label, color: colors.text },
+  sellerRole: { ...typography.caption, color: colors.textMuted },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  locationText: { ...typography.body, color: colors.textSecondary },
+  actionsRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
+  msgBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.primary, borderRadius: borderRadius.lg, paddingVertical: spacing.md },
+  msgBtnText: { ...typography.label, color: colors.white },
+  phoneBtn: { width: 50, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.primary, borderRadius: borderRadius.lg },
 })

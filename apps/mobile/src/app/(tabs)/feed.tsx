@@ -1,13 +1,17 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import {
   FlatList,
   View,
   Text,
   Image,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  Share,
+  Alert,
+  Modal,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -18,12 +22,61 @@ import { StoriesBar } from '../../components/StoriesBar.js'
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme.js'
 import type { Post } from '@agrolink/types'
 
+const REACTIONS = [
+  { type: 'like', icon: '❤️', label: 'Curtir' },
+  { type: 'applause', icon: '👏', label: 'Parabéns' },
+  { type: 'useful', icon: '💡', label: 'Útil' },
+  { type: 'insightful', icon: '🌾', label: 'Relevante' },
+]
+
+const REACTION_ICONS: Record<string, string> = {
+  like: '❤️', applause: '👏', useful: '💡', insightful: '🌾',
+}
+
+function ReactionPicker({ visible, onClose, onSelect }: {
+  visible: boolean
+  onClose: () => void
+  onSelect: (type: string) => void
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={rpStyles.overlay}>
+          <TouchableWithoutFeedback>
+            <View style={rpStyles.picker}>
+              {REACTIONS.map((r) => (
+                <TouchableOpacity key={r.type} style={rpStyles.item} onPress={() => { onSelect(r.type); onClose() }}>
+                  <Text style={rpStyles.emoji}>{r.icon}</Text>
+                  <Text style={rpStyles.label}>{r.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  )
+}
+
 function PostCard({ post }: { post: Post }) {
   const react = useReactToPost()
+  const [pickerVisible, setPickerVisible] = useState(false)
+
   const totalReactions = Object.values(post.reactionsCount ?? {}).reduce(
     (acc, v) => acc + (v as number),
     0
   )
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `${post.content}\n\n— @${post.author.username} no AgroLink`,
+        title: 'AgroLink',
+      })
+    } catch {/* user cancelled */}
+  }
+
+  const activeIcon = post.userReaction ? REACTION_ICONS[post.userReaction] : undefined
 
   return (
     <View style={styles.card}>
@@ -60,9 +113,7 @@ function PostCard({ post }: { post: Post }) {
       {post.tags?.length > 0 && (
         <View style={styles.tags}>
           {post.tags.map((tag) => (
-            <Text key={tag} style={styles.tag}>
-              #{tag}
-            </Text>
+            <Text key={tag} style={styles.tag}>#{tag}</Text>
           ))}
         </View>
       )}
@@ -78,18 +129,26 @@ function PostCard({ post }: { post: Post }) {
 
       {/* Actions */}
       <View style={styles.actions}>
+        {/* Reaction (tap = like toggle, long press = picker) */}
         <TouchableOpacity
           style={styles.action}
           onPress={() => react.mutate({ postId: post.id, type: 'like' })}
+          onLongPress={() => setPickerVisible(true)}
+          delayLongPress={400}
         >
-          <Ionicons
-            name={post.userReaction === 'like' ? 'heart' : 'heart-outline'}
-            size={22}
-            color={post.userReaction === 'like' ? colors.error : colors.textSecondary}
-          />
-          <Text style={styles.actionText}>{totalReactions}</Text>
+          {activeIcon ? (
+            <Text style={{ fontSize: 20, lineHeight: 26 }}>{activeIcon}</Text>
+          ) : (
+            <Ionicons name="heart-outline" size={22} color={colors.textSecondary} />
+          )}
+          {totalReactions > 0 && (
+            <Text style={[styles.actionText, post.userReaction && { color: colors.error }]}>
+              {totalReactions}
+            </Text>
+          )}
         </TouchableOpacity>
 
+        {/* Comments */}
         <TouchableOpacity
           style={styles.action}
           onPress={() => router.push(`/post/${post.id}`)}
@@ -98,10 +157,17 @@ function PostCard({ post }: { post: Post }) {
           <Text style={styles.actionText}>{post.commentsCount}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.action}>
+        {/* Share */}
+        <TouchableOpacity style={styles.action} onPress={handleShare}>
           <Ionicons name="share-social-outline" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
+
+      <ReactionPicker
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onSelect={(type) => react.mutate({ postId: post.id, type })}
+      />
     </View>
   )
 }
@@ -147,6 +213,7 @@ export default function FeedScreen() {
       <TouchableOpacity style={styles.newPost} onPress={() => router.push('/post/new')}>
         <Ionicons name="add-circle-outline" size={20} color={colors.textMuted} />
         <Text style={styles.newPostText}>O que está acontecendo na sua lavoura?</Text>
+        <Ionicons name="image-outline" size={20} color={colors.textMuted} />
       </TouchableOpacity>
 
       {isLoading ? (
@@ -230,4 +297,19 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: spacing.lg, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
   action: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   actionText: { ...typography.bodySmall, color: colors.textSecondary },
+})
+
+const rpStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
+  picker: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.xl ?? borderRadius.lg,
+    padding: spacing.md,
+    gap: spacing.md,
+    ...shadows.sm,
+  },
+  item: { alignItems: 'center', gap: spacing.xs, minWidth: 56 },
+  emoji: { fontSize: 28 },
+  label: { ...typography.caption, color: colors.textSecondary },
 })
