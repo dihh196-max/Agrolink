@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Image,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
@@ -17,6 +18,7 @@ import { router } from 'expo-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api.js'
 import { useAuthStore } from '../store/auth.js'
+import { choosePhotoSource } from '../lib/media.js'
 import { colors, spacing, typography, borderRadius, shadows } from '../constants/theme.js'
 import type { User } from '@agrolink/types'
 
@@ -122,18 +124,25 @@ export default function EditProfileScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          {/* Avatar preview */}
+          {/* Avatar picker */}
           <View style={styles.avatarSection}>
-            <View style={styles.avatarCircle}>
+            <TouchableOpacity
+              style={styles.avatarCircle}
+              onPress={async () => {
+                const uri = await choosePhotoSource()
+                if (uri) setAvatarUrl(uri)
+              }}
+            >
               {avatarUrl ? (
-                <Text style={styles.avatarEmoji}>🖼️</Text>
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImg} />
               ) : (
                 <Text style={styles.avatarFallbackText}>{name[0]?.toUpperCase()}</Text>
               )}
-            </View>
-            <Text style={styles.avatarHint}>
-              Informe a URL de uma imagem para usar como foto
-            </Text>
+              <View style={styles.avatarEditBadge}>
+                <Ionicons name="camera" size={14} color={colors.white} />
+              </View>
+            </TouchableOpacity>
+            <Text style={styles.avatarHint}>Toque para trocar a foto de perfil</Text>
           </View>
 
           <Field label="Nome completo *">
@@ -144,18 +153,6 @@ export default function EditProfileScreen() {
               placeholder="Seu nome"
               placeholderTextColor={colors.textMuted}
               maxLength={80}
-            />
-          </Field>
-
-          <Field label="URL da foto de perfil">
-            <TextInput
-              style={INPUT.base}
-              value={avatarUrl}
-              onChangeText={setAvatarUrl}
-              placeholder="https://exemplo.com/foto.jpg"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="url"
-              autoCapitalize="none"
             />
           </Field>
 
@@ -231,14 +228,22 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.md },
   avatarSection: { alignItems: 'center', marginBottom: spacing.sm },
   avatarCircle: {
-    width: 88, height: 88, borderRadius: 44,
+    width: 96, height: 96, borderRadius: 48,
     backgroundColor: colors.primaryLight,
     justifyContent: 'center', alignItems: 'center',
     marginBottom: spacing.sm,
     ...shadows.md,
+    position: 'relative',
   },
-  avatarEmoji: { fontSize: 40 },
+  avatarImg: { width: 96, height: 96, borderRadius: 48 },
   avatarFallbackText: { fontSize: 36, fontWeight: '700', color: colors.white },
+  avatarEditBadge: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: colors.primary,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, borderColor: colors.white,
+  },
   avatarHint: { ...typography.caption, color: colors.textMuted, textAlign: 'center' },
   field: { gap: spacing.xs },
   label: { ...typography.label, color: colors.textSecondary },
