@@ -15,6 +15,13 @@
       "when": 1779573000000,
       "tag": "0001_add_jobs_marketplace_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779574000000,
+      "tag": "0002_add_profile_fields",
+      "breakpoints": true
     }
   ]
 }

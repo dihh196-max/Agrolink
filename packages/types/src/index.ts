@@ -9,10 +9,19 @@ export interface User {
   name: string
   username: string
   avatarUrl?: string
+  coverUrl?: string
   bio?: string
   role: UserRole
   verified: boolean
   premiumUntil?: string
+  city?: string
+  state?: string
+  occupation?: string
+  experienceYears?: string
+  cultures?: string
+  website?: string
+  instagram?: string
+  birthDate?: string
   createdAt: string
   updatedAt: string
 }

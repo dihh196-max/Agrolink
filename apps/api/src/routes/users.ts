@@ -16,10 +16,19 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
         username: users.username,
         phone: users.phone,
         avatarUrl: users.avatarUrl,
+        coverUrl: users.coverUrl,
         bio: users.bio,
         role: users.role,
         verified: users.verified,
         premiumUntil: users.premiumUntil,
+        city: users.city,
+        state: users.state,
+        occupation: users.occupation,
+        experienceYears: users.experienceYears,
+        cultures: users.cultures,
+        website: users.website,
+        instagram: users.instagram,
+        birthDate: users.birthDate,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -37,7 +46,16 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
         name: z.string().min(2).optional(),
         bio: z.string().max(500).optional(),
         avatarUrl: z.string().optional(),
+        coverUrl: z.string().optional(),
         phone: z.string().optional(),
+        city: z.string().max(100).optional(),
+        state: z.string().length(2).optional(),
+        occupation: z.string().max(100).optional(),
+        experienceYears: z.string().max(20).optional(),
+        cultures: z.string().max(200).optional(),
+        website: z.string().max(255).optional(),
+        instagram: z.string().max(50).optional(),
+        birthDate: z.string().max(20).optional(),
       })
       .parse(request.body)
 
@@ -51,12 +69,23 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
         username: users.username,
         bio: users.bio,
         avatarUrl: users.avatarUrl,
+        coverUrl: users.coverUrl,
+        city: users.city,
+        state: users.state,
+        occupation: users.occupation,
+        experienceYears: users.experienceYears,
+        cultures: users.cultures,
+        website: users.website,
+        instagram: users.instagram,
+        birthDate: users.birthDate,
       })
 
     return updated
   })
 
-  // Get public profile with social counts and isFollowing
+  // Get public profile
+  // Note: we intentionally don't return followers/following counts —
+  // the product focus is communication, not vanity metrics.
   fastify.get('/users/:username', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { username } = request.params as { username: string }
     const meId = request.user.sub
@@ -67,9 +96,19 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
         name: users.name,
         username: users.username,
         avatarUrl: users.avatarUrl,
+        coverUrl: users.coverUrl,
         bio: users.bio,
         role: users.role,
         verified: users.verified,
+        premiumUntil: users.premiumUntil,
+        city: users.city,
+        state: users.state,
+        occupation: users.occupation,
+        experienceYears: users.experienceYears,
+        cultures: users.cultures,
+        website: users.website,
+        instagram: users.instagram,
+        birthDate: users.birthDate,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -78,16 +117,8 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
 
-    const [userFarms, followersRes, followingRes, postsRes, isFollowingRes] = await Promise.all([
+    const [userFarms, postsRes, isConnectedRes] = await Promise.all([
       db.select().from(farms).where(eq(farms.userId, user.id)),
-      db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(partnerships)
-        .where(eq(partnerships.followingId, user.id)),
-      db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(partnerships)
-        .where(eq(partnerships.followerId, user.id)),
       db
         .select({ count: sql<number>`count(*)::int` })
         .from(posts)
@@ -102,10 +133,11 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     return {
       ...user,
       farms: userFarms,
-      followersCount: followersRes[0]?.count ?? 0,
-      followingCount: followingRes[0]?.count ?? 0,
       postsCount: postsRes[0]?.count ?? 0,
-      isFollowing: isFollowingRes.length > 0,
+      isConnected: isConnectedRes.length > 0,
+      // Kept for backward compatibility with older mobile clients — will be
+      // removed once everyone is on the new build.
+      isFollowing: isConnectedRes.length > 0,
     }
   })
 
