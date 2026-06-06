@@ -47,3 +47,20 @@ export function choosePhotoSource(): Promise<string | null> {
     ])
   })
 }
+
+export async function pickMultiplePhotos(max = 5): Promise<string[]> {
+  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
+  if (!perm.granted) {
+    Alert.alert('Permissão necessária', 'Permita o acesso à galeria.')
+    return []
+  }
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsMultipleSelection: true,
+    selectionLimit: max,
+    quality: 0.5,
+    base64: true,
+  })
+  if (result.canceled) return []
+  return result.assets.map(toDataUri).filter((u): u is string => !!u)
+}
