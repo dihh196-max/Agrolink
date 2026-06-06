@@ -35,10 +35,21 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "AgroLink precisa acessar suas fotos para publicações e stories.",
+          "cameraPermission": "AgroLink precisa da câmera para fotografar sua lavoura."
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 23,
+            "kotlinVersion": "1.9.24"
           }
         }
       ]
