@@ -184,4 +184,19 @@ export const jobsRoutes: FastifyPluginAsync = async (fastify) => {
     const userId = request.user.sub
     return db.select().from(jobs).where(eq(jobs.userId, userId)).orderBy(desc(jobs.createdAt))
   })
+
+  // Manual trigger — forces immediate collection (for testing/admin)
+  fastify.post('/jobs/collect', { onRequest: [fastify.authenticate] }, async (_request, reply) => {
+    const { collectExternalJobs } = await import('../lib/collect-jobs.js')
+    collectExternalJobs(db)
+      .then(() => console.log('[jobs] Manual collect finished'))
+      .catch((e) => console.error('[jobs] Manual collect error:', e))
+    return reply.send({ ok: true, message: 'Coleta iniciada em background. Verifique os logs do servidor.' })
+  })
+
+  // External job count — useful to diagnose if table exists and has data
+  fastify.get('/jobs/external/count', { onRequest: [fastify.authenticate] }, async () => {
+    const rows = await db.select().from(externalJobs).limit(1000)
+    return { count: rows.length, hasApiKey: !!process.env.JSEARCH_API_KEY }
+  })
 }

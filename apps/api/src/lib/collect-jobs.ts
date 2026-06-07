@@ -1,14 +1,16 @@
 import type { Database } from '@agrolink/database'
 import { externalJobs } from '@agrolink/database'
-import { eq } from 'drizzle-orm'
+import { lt } from 'drizzle-orm'
 
+// Queries without country filter — JSearch indexes Brazilian job boards
+// when the query is in Portuguese; country=br often returns 0 results
 const AGRO_QUERIES = [
-  'engenheiro agronomo Brasil',
-  'tecnico agricola Brasil',
-  'operador colheitadeira Brasil',
-  'veterinario rural Brasil',
-  'gestor fazenda agronegocio Brasil',
-  'analista agronegocio Brasil',
+  'engenheiro agronomo',
+  'tecnico agricola',
+  'agronomia agronegocio',
+  'veterinario fazenda pecuaria',
+  'operador maquinas agricolas',
+  'gestor rural agropecuaria',
 ]
 
 const EMPLOYMENT_MAP: Record<string, string> = {
@@ -29,7 +31,8 @@ export async function collectExternalJobs(db: Database): Promise<void> {
 
   for (const query of AGRO_QUERIES) {
     try {
-      const url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=2&country=br&date_posted=month`
+      // Removed country=br (too restrictive) and date_posted=month (reduces results)
+      const url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=1&page=1`
       const res = await fetch(url, {
         headers: {
           'X-RapidAPI-Key': apiKey,
@@ -38,16 +41,17 @@ export async function collectExternalJobs(db: Database): Promise<void> {
       })
 
       if (!res.ok) {
-        console.error(`[jobs] JSearch error for "${query}": ${res.status}`)
+        console.error(`[jobs] JSearch error for "${query}": ${res.status} ${await res.text().catch(() => '')}`)
         continue
       }
 
-      const json = (await res.json()) as { data?: any[] }
+      const json = (await res.json()) as { data?: any[]; status?: string }
+      console.log(`[jobs] "${query}": status=${json.status} count=${json.data?.length ?? 0}`)
       const items = json.data ?? []
 
       for (const item of items) {
         if (!item.job_apply_link || !item.job_title || !item.employer_name) continue
-        if (!item.job_description || item.job_description.length < 50) continue
+        if (!item.job_description || item.job_description.length < 30) continue
 
         collected.push({
           externalId: item.job_id,
@@ -65,22 +69,26 @@ export async function collectExternalJobs(db: Database): Promise<void> {
           applyUrl: item.job_apply_link,
           source: 'jsearch',
           keywords: [query],
-          requiredSkills: Array.isArray(item.job_required_skills) ? item.job_required_skills.slice(0, 10) : null,
-          postedAt: item.job_posted_at_datetime_utc ? new Date(item.job_posted_at_datetime_utc) : null,
+          requiredSkills: Array.isArray(item.job_required_skills)
+            ? item.job_required_skills.slice(0, 10)
+            : null,
+          postedAt: item.job_posted_at_datetime_utc
+            ? new Date(item.job_posted_at_datetime_utc)
+            : null,
           expiresAt: null,
           cachedAt: new Date(),
         })
       }
 
-      await new Promise((r) => setTimeout(r, 500))
+      // Respect rate limits
+      await new Promise((r) => setTimeout(r, 600))
     } catch (e) {
       console.error(`[jobs] Failed to fetch for query "${query}":`, e)
     }
   }
 
-  if (!collected.length) return
+  console.log(`[jobs] Total collected before upsert: ${collected.length}`)
 
-  // Upsert — update cachedAt on conflict
   for (const job of collected) {
     await db
       .insert(externalJobs)
@@ -95,12 +103,12 @@ export async function collectExternalJobs(db: Database): Promise<void> {
           cachedAt: new Date(),
         },
       })
-      .catch(() => {})
+      .catch((e) => console.error('[jobs] upsert error:', e))
   }
 
-  // Remove stale entries older than 30 days
+  // Remove entries older than 30 days (fixed: lt instead of eq)
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  await db.delete(externalJobs).where(eq(externalJobs.cachedAt, cutoff)).catch(() => {})
+  await db.delete(externalJobs).where(lt(externalJobs.cachedAt, cutoff)).catch(() => {})
 
-  console.log(`[jobs] Collected ${collected.length} external jobs`)
+  console.log(`[jobs] Collected and saved ${collected.length} external jobs`)
 }
