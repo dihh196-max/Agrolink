@@ -89,21 +89,25 @@ export const jobsRoutes: FastifyPluginAsync = async (fastify) => {
 
     // External jobs
     if (source !== 'internal') {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-      const extRows = await db
-        .select()
-        .from(externalJobs)
-        .where(
-          and(
-            gt(externalJobs.cachedAt, thirtyDaysAgo),
-            q ? or(ilike(externalJobs.title, `%${q}%`), ilike(externalJobs.company, `%${q}%`)) : undefined
+      try {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        const extRows = await db
+          .select()
+          .from(externalJobs)
+          .where(
+            and(
+              gt(externalJobs.cachedAt, thirtyDaysAgo),
+              q ? or(ilike(externalJobs.title, `%${q}%`), ilike(externalJobs.company, `%${q}%`)) : undefined
+            )
           )
-        )
-        .orderBy(desc(externalJobs.postedAt))
-        .limit(60)
+          .orderBy(desc(externalJobs.postedAt))
+          .limit(60)
 
-      for (const r of extRows) {
-        externalList.push({ ...r, source: 'external', distanceKm: undefined as number | undefined })
+        for (const r of extRows) {
+          externalList.push({ ...r, source: 'external', distanceKm: undefined as number | undefined })
+        }
+      } catch (e) {
+        console.error('[jobs] external query error (table may not exist yet):', (e as any)?.message)
       }
     }
 
