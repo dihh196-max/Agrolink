@@ -7,6 +7,7 @@ import fp from 'fastify-plugin'
 import { createDatabase } from '@agrolink/database'
 import { env } from './lib/env.js'
 import { collectPrices } from './lib/collect-prices.js'
+import { collectExternalJobs } from './lib/collect-jobs.js'
 import authPlugin from './plugins/auth.js'
 import { authRoutes } from './routes/auth.js'
 import { postsRoutes } from './routes/posts.js'
@@ -80,6 +81,10 @@ try {
   collectPrices(db).catch((e) => console.error('[prices] initial collect failed:', e))
   setInterval(() => collectPrices(db).catch((e) => console.error('[prices] collect failed:', e)), 15 * 60 * 1000)
   console.log('[prices] Scheduler started — updating every 15 min')
+
+  // Start external jobs collection: immediately on boot, then every 4 hours
+  collectExternalJobs(db).catch((e) => console.error('[jobs] initial collect failed:', e))
+  setInterval(() => collectExternalJobs(db).catch((e) => console.error('[jobs] collect failed:', e)), 4 * 60 * 60 * 1000)
 } catch (err) {
   fastify.log.error(err)
   process.exit(1)

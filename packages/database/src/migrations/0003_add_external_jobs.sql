@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS "external_jobs" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "external_id" text NOT NULL UNIQUE,
+  "title" varchar(255) NOT NULL,
+  "company" varchar(255) NOT NULL,
+  "company_logo" text,
+  "description" text NOT NULL,
+  "employment_type" varchar(50) DEFAULT 'permanent',
+  "city" varchar(100),
+  "state" varchar(100),
+  "country" varchar(10) DEFAULT 'BR',
+  "salary_min" real,
+  "salary_max" real,
+  "salary_currency" varchar(10) DEFAULT 'BRL',
+  "apply_url" text NOT NULL,
+  "source" varchar(50) DEFAULT 'jsearch' NOT NULL,
+  "keywords" text[],
+  "required_skills" text[],
+  "posted_at" timestamp,
+  "expires_at" timestamp,
+  "cached_at" timestamp DEFAULT now() NOT NULL
+);

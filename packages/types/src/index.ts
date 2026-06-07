@@ -376,6 +376,30 @@ export interface JobApplication {
   createdAt: string
 }
 
+export interface ExternalJob {
+  id: string
+  externalId: string
+  title: string
+  company: string
+  companyLogo?: string
+  description: string
+  employmentType?: string
+  city?: string
+  state?: string
+  country?: string
+  salaryMin?: number
+  salaryMax?: number
+  salaryCurrency?: string
+  applyUrl: string
+  source: string
+  keywords?: string[]
+  requiredSkills?: string[]
+  postedAt?: string
+  expiresAt?: string
+  cachedAt: string
+  distanceKm?: number
+}
+
 // ─── Marketplace ──────────────────────────────────────────────────────────────
 
 export type ProductCategory =

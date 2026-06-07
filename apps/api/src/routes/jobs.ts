@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
-import { eq, desc, and, ilike, or, sql } from 'drizzle-orm'
-import { jobs, jobApplications, users } from '@agrolink/database'
+import { eq, desc, and, ilike, or, gt } from 'drizzle-orm'
+import { jobs, jobApplications, users, externalJobs } from '@agrolink/database'
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371
@@ -27,47 +27,87 @@ const jobSchema = z.object({
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   deadline: z.string().datetime().optional(),
+  requirements: z.array(z.string()).max(10).optional(),
+  benefits: z.array(z.string()).max(10).optional(),
+  skills: z.array(z.string()).max(15).optional(),
+  workMode: z.enum(['presencial', 'remoto', 'hibrido']).optional(),
 })
 
 export const jobsRoutes: FastifyPluginAsync = async (fastify) => {
   const db = fastify.db
 
-  // List jobs with optional text search and geo filter
+  // List jobs — internal + external merged
   fastify.get('/jobs', { onRequest: [fastify.authenticate] }, async (request) => {
-    const { q, type, lat, lng, radius } = z
+    const { q, type, source, lat, lng, radius } = z
       .object({
         q: z.string().max(100).optional(),
         type: z.enum(['seasonal', 'permanent', 'internship', 'service']).optional(),
+        source: z.enum(['internal', 'external', 'all']).default('all'),
         lat: z.coerce.number().optional(),
         lng: z.coerce.number().optional(),
-        radius: z.coerce.number().positive().default(200),
+        radius: z.coerce.number().positive().default(500),
       })
       .parse(request.query)
 
-    let rows = await db
-      .select({
-        job: jobs,
-        poster: {
-          id: users.id,
-          name: users.name,
-          username: users.username,
-          avatarUrl: users.avatarUrl,
-          role: users.role,
-        },
-      })
-      .from(jobs)
-      .innerJoin(users, eq(jobs.userId, users.id))
-      .where(
-        and(
-          eq(jobs.active, true),
-          type ? eq(jobs.type, type) : undefined,
-          q ? or(ilike(jobs.title, `%${q}%`), ilike(jobs.description, `%${q}%`)) : undefined
-        )
-      )
-      .orderBy(desc(jobs.createdAt))
-      .limit(50)
+    const internalList: any[] = []
+    const externalList: any[] = []
 
-    let results = rows.map((r) => ({ ...r.job, poster: r.poster, distanceKm: undefined as number | undefined }))
+    // Internal jobs
+    if (source !== 'external') {
+      const rows = await db
+        .select({
+          job: jobs,
+          poster: {
+            id: users.id,
+            name: users.name,
+            username: users.username,
+            avatarUrl: users.avatarUrl,
+            role: users.role,
+          },
+        })
+        .from(jobs)
+        .innerJoin(users, eq(jobs.userId, users.id))
+        .where(
+          and(
+            eq(jobs.active, true),
+            type ? eq(jobs.type, type) : undefined,
+            q ? or(ilike(jobs.title, `%${q}%`), ilike(jobs.description, `%${q}%`)) : undefined
+          )
+        )
+        .orderBy(desc(jobs.createdAt))
+        .limit(30)
+
+      for (const r of rows) {
+        internalList.push({
+          ...r.job,
+          poster: r.poster,
+          source: 'internal',
+          distanceKm: undefined as number | undefined,
+        })
+      }
+    }
+
+    // External jobs
+    if (source !== 'internal') {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      const extRows = await db
+        .select()
+        .from(externalJobs)
+        .where(
+          and(
+            gt(externalJobs.cachedAt, thirtyDaysAgo),
+            q ? or(ilike(externalJobs.title, `%${q}%`), ilike(externalJobs.company, `%${q}%`)) : undefined
+          )
+        )
+        .orderBy(desc(externalJobs.postedAt))
+        .limit(60)
+
+      for (const r of extRows) {
+        externalList.push({ ...r, source: 'external', distanceKm: undefined as number | undefined })
+      }
+    }
+
+    let results = [...internalList, ...externalList]
 
     if (lat != null && lng != null) {
       results = results
@@ -78,14 +118,13 @@ export const jobsRoutes: FastifyPluginAsync = async (fastify) => {
               ? Math.round(haversineKm(lat, lng, j.latitude, j.longitude))
               : undefined,
         }))
-        .filter((j) => j.distanceKm == null || j.distanceKm <= radius)
         .sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999))
     }
 
     return results
   })
 
-  // Get single job
+  // Get single internal job
   fastify.get('/jobs/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
 
@@ -106,12 +145,12 @@ export const jobsRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (!rows.length) return reply.code(404).send({ message: 'Vaga não encontrada' })
 
-    return { ...rows[0].job, poster: rows[0].poster }
+    return { ...rows[0].job, poster: rows[0].poster, source: 'internal' }
   })
 
   // Post a job
   fastify.post('/jobs', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const userId = (request as any).user.id
+    const userId = request.user.sub
     const body = jobSchema.parse(request.body)
 
     const [created] = await db
@@ -126,7 +165,7 @@ export const jobsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/jobs/:id/apply', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { id: jobId } = z.object({ id: z.string().uuid() }).parse(request.params)
     const { message } = z.object({ message: z.string().max(1000).optional() }).parse(request.body)
-    const userId = (request as any).user.id
+    const userId = request.user.sub
 
     const existing = await db
       .select()
@@ -135,17 +174,14 @@ export const jobsRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (existing.length) return reply.code(409).send({ message: 'Você já se candidatou a esta vaga' })
 
-    const [app] = await db
-      .insert(jobApplications)
-      .values({ jobId, userId, message })
-      .returning()
+    const [app] = await db.insert(jobApplications).values({ jobId, userId, message }).returning()
 
     return reply.code(201).send(app)
   })
 
   // My posted jobs
   fastify.get('/jobs/mine', { onRequest: [fastify.authenticate] }, async (request) => {
-    const userId = (request as any).user.id
+    const userId = request.user.sub
     return db.select().from(jobs).where(eq(jobs.userId, userId)).orderBy(desc(jobs.createdAt))
   })
 }
