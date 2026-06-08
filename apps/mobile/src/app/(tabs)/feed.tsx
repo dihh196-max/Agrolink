@@ -22,7 +22,6 @@ import { useFeed, useReactToPost } from '../../hooks/useFeed.js'
 import { useNotifications } from '../../hooks/useSocial.js'
 import { useAuthStore } from '../../store/auth.js'
 import { StoriesBar } from '../../components/StoriesBar.js'
-import { MarketPulse } from '../../components/MarketPulse.js'
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme.js'
 import type { Post } from '@agrolink/types'
 
@@ -79,8 +78,8 @@ function ImageCarousel({
   onDoubleTap: () => void
 }) {
   const { width } = useWindowDimensions()
-  const cardWidth = width - spacing.md * 2
-  const imgH = Math.round(cardWidth * 0.75)
+  const cardWidth = width
+  const imgH = cardWidth + spacing.md * 2
   const [page, setPage] = useState(0)
   const lastTap = useRef(0)
 
@@ -102,7 +101,7 @@ function ImageCarousel({
           setPage(Math.round(e.nativeEvent.contentOffset.x / cardWidth))
         }
         scrollEventThrottle={16}
-        style={{ marginHorizontal: -spacing.md }}
+        style={{}}
       >
         {media.map((m, i) => (
           <TouchableWithoutFeedback key={i} onPress={handleTap}>
@@ -535,7 +534,6 @@ export default function FeedScreen() {
     () => (
       <>
         <StoriesBar />
-        <MarketPulse />
         <TrendingTags posts={posts} />
         <NewPostCta />
       </>
@@ -637,11 +635,8 @@ const s = StyleSheet.create({
   // Post card
   card: {
     backgroundColor: colors.white,
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-    ...shadows.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   authorRow: {
     flexDirection: 'row',
@@ -651,12 +646,12 @@ const s = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   authorLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
-  avatar: { width: 44, height: 44, borderRadius: 22 },
+  avatar: { width: 48, height: 48, borderRadius: 24 },
   avatarGrad: { justifyContent: 'center', alignItems: 'center' },
   avatarInitial: { ...typography.h4, color: colors.white },
   authorInfo: { flex: 1, gap: 2 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
-  authorName: { ...typography.label, color: colors.text, fontWeight: '700' },
+  authorName: { ...typography.label, color: colors.text, fontWeight: '700', fontSize: 15 },
   roleBadge: {
     paddingHorizontal: 6, paddingVertical: 2,
     borderRadius: borderRadius.sm,
