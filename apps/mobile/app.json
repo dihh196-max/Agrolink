@@ -17,7 +17,6 @@
       "bundleIdentifier": "com.agrolink.app",
       "infoPlist": {
         "NSCameraUsageDescription": "Para fotografar sua lavoura",
-        "NSLocationWhenInUseUsageDescription": "Para dados de clima e ofertas próximas",
         "NSMicrophoneUsageDescription": "Para gravar vídeos da lavoura"
       }
     },
@@ -29,26 +28,31 @@
       "package": "com.agrolink.app",
       "permissions": [
         "CAMERA",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
       ]
     },
+    "extra": {
+      "apiUrl": "https://agrolink-production-17c8.up.railway.app/api/v1"
+    },
     "plugins": [
       "expo-router",
-      "expo-notifications",
       [
-        "expo-location",
+        "expo-image-picker",
         {
-          "locationAlwaysAndWhenInUsePermission": "Necessário para clima e ofertas na sua região"
+          "photosPermission": "AgroLink precisa acessar suas fotos para publicações e stories.",
+          "cameraPermission": "AgroLink precisa da câmera para fotografar sua lavoura."
         }
       ],
       [
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 23,
+            "kotlinVersion": "1.9.24"
           }
         }
       ]

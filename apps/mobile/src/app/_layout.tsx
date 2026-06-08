@@ -25,6 +25,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <StatusBar style="light" />
           <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="notifications" />
@@ -32,6 +33,8 @@ export default function RootLayout() {
             <Stack.Screen name="post/new" options={{ presentation: 'modal' }} />
             <Stack.Screen name="post/[id]" />
             <Stack.Screen name="profile/[username]" />
+            <Stack.Screen name="edit-profile" />
+            <Stack.Screen name="settings" />
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>

@@ -5,12 +5,15 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   FlatList,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Alert,
+  Share,
+  Modal,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -34,7 +37,29 @@ function timeAgo(date: string) {
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const [comment, setComment] = useState('')
+  const [pickerVisible, setPickerVisible] = useState(false)
   const inputRef = useRef<TextInput>(null)
+
+  const REACTIONS = [
+    { type: 'like', icon: '❤️', label: 'Curtir' },
+    { type: 'applause', icon: '👏', label: 'Parabéns' },
+    { type: 'useful', icon: '💡', label: 'Útil' },
+    { type: 'insightful', icon: '🌾', label: 'Relevante' },
+  ]
+
+  const REACTION_ICONS: Record<string, string> = {
+    like: '❤️', applause: '👏', useful: '💡', insightful: '🌾',
+  }
+
+  const handleShare = async () => {
+    if (!post) return
+    try {
+      await Share.share({
+        message: `${post.content}\n\n— @${post.author.username} no AgroLink`,
+        title: 'AgroLink',
+      })
+    } catch {/* user cancelled */}
+  }
 
   const { data: post, isLoading } = useQuery<Post>({
     queryKey: ['post', id],
@@ -120,24 +145,57 @@ export default function PostDetailScreen() {
                   </View>
                 )}
                 <View style={styles.actions}>
+                  {/* Reaction: tap = like toggle, long press = picker */}
                   <TouchableOpacity
                     style={styles.action}
                     onPress={() => react.mutate({ postId: post.id, type: 'like' })}
+                    onLongPress={() => setPickerVisible(true)}
+                    delayLongPress={400}
                   >
-                    <Ionicons
-                      name={post.userReaction === 'like' ? 'heart' : 'heart-outline'}
-                      size={22}
-                      color={post.userReaction === 'like' ? colors.error : colors.textSecondary}
-                    />
-                    <Text style={styles.actionText}>{totalReactions}</Text>
+                    {post.userReaction ? (
+                      <Text style={{ fontSize: 20, lineHeight: 26 }}>
+                        {REACTION_ICONS[post.userReaction] ?? '❤️'}
+                      </Text>
+                    ) : (
+                      <Ionicons name="heart-outline" size={22} color={colors.textSecondary} />
+                    )}
+                    {totalReactions > 0 && (
+                      <Text style={[styles.actionText, post.userReaction && { color: colors.error }]}>
+                        {totalReactions}
+                      </Text>
+                    )}
                   </TouchableOpacity>
+
                   <View style={styles.action}>
                     <Ionicons name="chatbubble-outline" size={22} color={colors.primary} />
                     <Text style={[styles.actionText, { color: colors.primary }]}>
                       {comments.length}
                     </Text>
                   </View>
+
+                  <TouchableOpacity style={styles.action} onPress={handleShare}>
+                    <Ionicons name="share-social-outline" size={22} color={colors.textSecondary} />
+                  </TouchableOpacity>
                 </View>
+
+                {/* Reaction picker modal */}
+                <Modal visible={pickerVisible} transparent animationType="fade" onRequestClose={() => setPickerVisible(false)}>
+                  <TouchableWithoutFeedback onPress={() => setPickerVisible(false)}>
+                    <View style={rpStyles.overlay}>
+                      <TouchableWithoutFeedback>
+                        <View style={rpStyles.picker}>
+                          {REACTIONS.map((r) => (
+                            <TouchableOpacity key={r.type} style={rpStyles.item}
+                              onPress={() => { react.mutate({ postId: post.id, type: r.type }); setPickerVisible(false) }}>
+                              <Text style={rpStyles.emoji}>{r.icon}</Text>
+                              <Text style={rpStyles.label}>{r.label}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </TouchableWithoutFeedback>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </Modal>
               </View>
 
               <Text style={styles.commentsLabel}>
@@ -283,4 +341,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendBtnDisabled: { backgroundColor: colors.border },
+})
+
+const rpStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
+  picker: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    gap: spacing.md,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
+  item: { alignItems: 'center', gap: spacing.xs, minWidth: 56 },
+  emoji: { fontSize: 28 },
+  label: { ...typography.caption, color: colors.textSecondary },
 })

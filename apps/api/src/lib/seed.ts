@@ -4,16 +4,24 @@
  */
 import 'dotenv/config'
 import { createDatabase, users, farms, farmCultures, marketPrices, posts, offers, newsArticles, jobs, marketplaceProducts } from '@agrolink/database'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 const db = createDatabase(process.env.DATABASE_URL!)
 
 async function seed() {
   console.log('🌱 Seeding AgroLink database...')
 
+  // ── Reset demo data (idempotent) ──────────────────────────────────────────
+  // Truncating users cascades to all user-owned rows via FK; the two tables
+  // without a user FK (prices, news) are cleared explicitly.
+  const { eq, sql } = await import('drizzle-orm')
+  await db.execute(
+    sql`TRUNCATE TABLE users, market_prices, news_articles RESTART IDENTITY CASCADE`
+  )
+  console.log('  ✓ Tabelas de demo limpas')
+
   // ── Users ────────────────────────────────────────────────────────────────
   const passwordHash = await bcrypt.hash('senha12345', 12)
-  const { eq } = await import('drizzle-orm')
 
   async function upsertUser(values: typeof users.$inferInsert) {
     await db.insert(users).values(values).onConflictDoNothing()
@@ -21,10 +29,30 @@ async function seed() {
     return u
   }
 
-  const joao = await upsertUser({ email: 'joao@fazenda.com', phone: '66999887766', name: 'João da Silva', username: 'joaosilva', passwordHash, role: 'producer', verified: true })
-  const maria = await upsertUser({ email: 'maria@coop.com', phone: '65988776655', name: 'Maria Souza', username: 'mariasouza', passwordHash, role: 'cooperative', verified: true })
-  const pedro = await upsertUser({ email: 'pedro@insumos.com', phone: '66977665544', name: 'Pedro Alves', username: 'pedroalves', passwordHash, role: 'supplier' })
-  const ana = await upsertUser({ email: 'ana@agronoma.com', phone: '65966554433', name: 'Ana Rodrigues', username: 'anaagronoma', passwordHash, role: 'technician', verified: true })
+  const joao = await upsertUser({
+    email: 'joao@fazenda.com', phone: '66999887766', name: 'João da Silva',
+    username: 'joaosilva', passwordHash, role: 'producer', verified: true,
+    avatarUrl: 'https://randomuser.me/api/portraits/men/75.jpg',
+    bio: 'Produtor de soja e milho em Sorriso/MT. Fazenda São João — 2.800 ha. Investindo em tecnologia e sustentabilidade no campo. 🌾',
+  })
+  const maria = await upsertUser({
+    email: 'maria@coop.com', phone: '65988776655', name: 'Maria Souza',
+    username: 'mariasouza', passwordHash, role: 'cooperative', verified: true,
+    avatarUrl: 'https://randomuser.me/api/portraits/women/65.jpg',
+    bio: 'Diretora Comercial na Coop Centro-Oeste. Conectando produtores e mercados há 15 anos no agronegócio do Mato Grosso. 🤝',
+  })
+  const pedro = await upsertUser({
+    email: 'pedro@insumos.com', phone: '66977665544', name: 'Pedro Alves',
+    username: 'pedroalves', passwordHash, role: 'supplier',
+    avatarUrl: 'https://randomuser.me/api/portraits/men/52.jpg',
+    bio: 'Especialista em insumos agrícolas para MT e GO. Sementes certificadas, fertilizantes e defensivos para o sucesso da sua lavoura. 🧪',
+  })
+  const ana = await upsertUser({
+    email: 'ana@agronoma.com', phone: '65966554433', name: 'Ana Rodrigues',
+    username: 'anaagronoma', passwordHash, role: 'technician', verified: true,
+    avatarUrl: 'https://randomuser.me/api/portraits/women/90.jpg',
+    bio: 'Engenheira Agrônoma especialista em MIP e manejo de ferrugem asiática. Consultoria para produtores de MT e MS. CREA-MT ✅',
+  })
 
   console.log('  ✓ 4 usuários')
 
@@ -236,18 +264,21 @@ async function seed() {
         description: 'Sementes certificadas de soja, variedade TMG 7062 IPRO. Alta produtividade e resistência à ferrugem. Embalagem de 40 kg. Grupo de maturação 6.2.',
         category: 'seeds', price: 480.00, unit: 'saco 40kg',
         stock: 200, city: 'Cuiabá', state: 'MT', latitude: -15.601, longitude: -56.097,
+        images: ['https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&q=80'],
       },
       {
         userId: pedro.id, name: 'Fertilizante MAP 10-52-00 Granulado',
         description: 'Fertilizante fosfatado para aplicação no plantio. Ideal para correção e manutenção do solo em lavouras de soja e milho. Saco de 50 kg.',
         category: 'fertilizers', price: 185.00, unit: 'saco 50kg',
         stock: 500, city: 'Cuiabá', state: 'MT', latitude: -15.601, longitude: -56.097,
+        images: ['https://picsum.photos/seed/agrolink-fert/600/400'],
       },
       {
         userId: pedro.id, name: 'Herbicida Glifosato 480 g/L',
         description: 'Herbicida sistêmico de amplo espectro para controle de plantas daninhas em lavouras transgênicas. Galão de 20L.',
         category: 'pesticides', price: 140.00, unit: 'galão 20L',
         stock: 150, city: 'Cuiabá', state: 'MT', latitude: -15.601, longitude: -56.097,
+        images: ['https://picsum.photos/seed/agrolink-herb/600/400'],
       },
     ]).onConflictDoNothing()
   }
@@ -259,12 +290,14 @@ async function seed() {
         description: 'Trator 100cv com apenas 800 horas de uso. Cabine, ar condicionado, tração 4x4. Revisões em dia. Retirada na Fazenda São João, Sorriso/MT.',
         category: 'equipment', price: 280000.00, unit: 'unidade',
         stock: 1, city: 'Sorriso', state: 'MT', latitude: -12.549, longitude: -55.720,
+        images: ['https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=600&q=80'],
       },
       {
         userId: joao.id, name: 'Soja em Grão – Safra 24/25 (Excedente)',
         description: 'Venda de excedente de produção. Soja limpa, umidade 12%, impurezas < 1%. Disponível no silo da fazenda. Volume: 300 toneladas.',
         category: 'grains', price: 119.50, unit: 'saca 60kg',
         stock: 5000, city: 'Sorriso', state: 'MT', latitude: -12.549, longitude: -55.720,
+        images: ['https://picsum.photos/seed/agrolink-grain/600/400'],
       },
     ]).onConflictDoNothing()
   }
@@ -276,6 +309,7 @@ async function seed() {
         description: 'Inoculante líquido para fixação biológica de nitrogênio em soja. Produto cooperativa, preço especial para associados.',
         category: 'seeds', price: 95.00, unit: 'frasco 5L',
         stock: 300, city: 'Lucas do Rio Verde', state: 'MT', latitude: -13.057, longitude: -55.905,
+        images: ['https://picsum.photos/seed/agrolink-inoc/600/400'],
       },
     ]).onConflictDoNothing()
   }

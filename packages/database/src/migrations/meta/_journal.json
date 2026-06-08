@@ -8,6 +8,27 @@
       "when": 1779572394948,
       "tag": "0000_normal_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779573000000,
+      "tag": "0001_add_jobs_marketplace_messages",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779574000000,
+      "tag": "0002_add_profile_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1749340800000,
+      "tag": "0003_add_external_jobs",
+      "breakpoints": true
     }
   ]
 }

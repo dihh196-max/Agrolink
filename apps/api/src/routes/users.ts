@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
-import { eq, and } from 'drizzle-orm'
-import { users, farms, farmCultures, connections } from '@agrolink/database'
+import { eq, and, desc, sql } from 'drizzle-orm'
+import { users, farms, farmCultures, connections, partnerships, posts } from '@agrolink/database'
 
 export const usersRoutes: FastifyPluginAsync = async (fastify) => {
   const db = fastify.db
@@ -16,10 +16,19 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
         username: users.username,
         phone: users.phone,
         avatarUrl: users.avatarUrl,
+        coverUrl: users.coverUrl,
         bio: users.bio,
         role: users.role,
         verified: users.verified,
         premiumUntil: users.premiumUntil,
+        city: users.city,
+        state: users.state,
+        occupation: users.occupation,
+        experienceYears: users.experienceYears,
+        cultures: users.cultures,
+        website: users.website,
+        instagram: users.instagram,
+        birthDate: users.birthDate,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -36,8 +45,17 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       .object({
         name: z.string().min(2).optional(),
         bio: z.string().max(500).optional(),
-        avatarUrl: z.string().url().optional(),
+        avatarUrl: z.string().optional(),
+        coverUrl: z.string().optional(),
         phone: z.string().optional(),
+        city: z.string().max(100).optional(),
+        state: z.string().length(2).optional(),
+        occupation: z.string().max(100).optional(),
+        experienceYears: z.string().max(20).optional(),
+        cultures: z.string().max(200).optional(),
+        website: z.string().max(255).optional(),
+        instagram: z.string().max(50).optional(),
+        birthDate: z.string().max(20).optional(),
       })
       .parse(request.body)
 
@@ -51,14 +69,26 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
         username: users.username,
         bio: users.bio,
         avatarUrl: users.avatarUrl,
+        coverUrl: users.coverUrl,
+        city: users.city,
+        state: users.state,
+        occupation: users.occupation,
+        experienceYears: users.experienceYears,
+        cultures: users.cultures,
+        website: users.website,
+        instagram: users.instagram,
+        birthDate: users.birthDate,
       })
 
     return updated
   })
 
   // Get public profile
+  // Note: we intentionally don't return followers/following counts —
+  // the product focus is communication, not vanity metrics.
   fastify.get('/users/:username', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { username } = request.params as { username: string }
+    const meId = request.user.sub
 
     const [user] = await db
       .select({
@@ -66,9 +96,19 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
         name: users.name,
         username: users.username,
         avatarUrl: users.avatarUrl,
+        coverUrl: users.coverUrl,
         bio: users.bio,
         role: users.role,
         verified: users.verified,
+        premiumUntil: users.premiumUntil,
+        city: users.city,
+        state: users.state,
+        occupation: users.occupation,
+        experienceYears: users.experienceYears,
+        cultures: users.cultures,
+        website: users.website,
+        instagram: users.instagram,
+        birthDate: users.birthDate,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -77,9 +117,60 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
 
-    const userFarms = await db.select().from(farms).where(eq(farms.userId, user.id))
+    const [userFarms, postsRes, isConnectedRes] = await Promise.all([
+      db.select().from(farms).where(eq(farms.userId, user.id)),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(posts)
+        .where(eq(posts.userId, user.id)),
+      db
+        .select({ id: partnerships.id })
+        .from(partnerships)
+        .where(and(eq(partnerships.followerId, meId), eq(partnerships.followingId, user.id)))
+        .limit(1),
+    ])
 
-    return { ...user, farms: userFarms }
+    return {
+      ...user,
+      farms: userFarms,
+      postsCount: postsRes[0]?.count ?? 0,
+      isConnected: isConnectedRes.length > 0,
+      // Kept for backward compatibility with older mobile clients — will be
+      // removed once everyone is on the new build.
+      isFollowing: isConnectedRes.length > 0,
+    }
+  })
+
+  // Get a user's public posts
+  fastify.get('/users/:username/posts', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { username } = request.params as { username: string }
+
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.username, username))
+      .limit(1)
+
+    if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
+
+    const rows = await db
+      .select({
+        post: posts,
+        author: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          avatarUrl: users.avatarUrl,
+          role: users.role,
+        },
+      })
+      .from(posts)
+      .innerJoin(users, eq(posts.userId, users.id))
+      .where(eq(posts.userId, user.id))
+      .orderBy(desc(posts.createdAt))
+      .limit(30)
+
+    return rows.map((r) => ({ ...r.post, author: r.author }))
   })
 
   // List user farms

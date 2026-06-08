@@ -56,3 +56,26 @@ export const jobApplications = pgTable('job_applications', {
   status: jobApplicationStatusEnum('status').notNull().default('pending'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
+
+export const externalJobs = pgTable('external_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  externalId: text('external_id').notNull().unique(),
+  title: varchar('title', { length: 255 }).notNull(),
+  company: varchar('company', { length: 255 }).notNull(),
+  companyLogo: text('company_logo'),
+  description: text('description').notNull(),
+  employmentType: varchar('employment_type', { length: 50 }).default('permanent'),
+  city: varchar('city', { length: 100 }),
+  state: varchar('state', { length: 100 }),
+  country: varchar('country', { length: 10 }).default('BR'),
+  salaryMin: real('salary_min'),
+  salaryMax: real('salary_max'),
+  salaryCurrency: varchar('salary_currency', { length: 10 }).default('BRL'),
+  applyUrl: text('apply_url').notNull(),
+  source: varchar('source', { length: 50 }).notNull().default('jsearch'),
+  keywords: text('keywords').array(),
+  requiredSkills: text('required_skills').array(),
+  postedAt: timestamp('posted_at'),
+  expiresAt: timestamp('expires_at'),
+  cachedAt: timestamp('cached_at').notNull().defaultNow(),
+})

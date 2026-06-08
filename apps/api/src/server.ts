@@ -6,9 +6,12 @@ import rateLimit from '@fastify/rate-limit'
 import fp from 'fastify-plugin'
 import { createDatabase } from '@agrolink/database'
 import { env } from './lib/env.js'
+import { collectPrices } from './lib/collect-prices.js'
+import { collectExternalJobs } from './lib/collect-jobs.js'
 import authPlugin from './plugins/auth.js'
 import { authRoutes } from './routes/auth.js'
 import { postsRoutes } from './routes/posts.js'
+import { storiesRoutes } from './routes/stories.js'
 import { marketRoutes } from './routes/market.js'
 import { aiRoutes } from './routes/ai.js'
 import { weatherRoutes } from './routes/weather.js'
@@ -27,7 +30,10 @@ declare module 'fastify' {
   }
 }
 
-const fastify = Fastify({ logger: env.NODE_ENV !== 'production' })
+const fastify = Fastify({
+  logger: env.NODE_ENV !== 'production',
+  bodyLimit: 20 * 1024 * 1024,
+})
 
 // Security
 await fastify.register(helmet, { contentSecurityPolicy: false })
@@ -53,6 +59,7 @@ const API_PREFIX = '/api/v1'
 await fastify.register(authRoutes, { prefix: API_PREFIX })
 await fastify.register(usersRoutes, { prefix: API_PREFIX })
 await fastify.register(postsRoutes, { prefix: API_PREFIX })
+await fastify.register(storiesRoutes, { prefix: API_PREFIX })
 await fastify.register(marketRoutes, { prefix: API_PREFIX })
 await fastify.register(aiRoutes, { prefix: API_PREFIX })
 await fastify.register(weatherRoutes, { prefix: API_PREFIX })
@@ -69,6 +76,46 @@ fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOS
 try {
   await fastify.listen({ port: env.PORT, host: '0.0.0.0' })
   console.log(`AgroLink API running on port ${env.PORT}`)
+
+  // Start price collection: immediately on boot, then every 15 minutes
+  collectPrices(db).catch((e) => console.error('[prices] initial collect failed:', e))
+  setInterval(() => collectPrices(db).catch((e) => console.error('[prices] collect failed:', e)), 15 * 60 * 1000)
+  console.log('[prices] Scheduler started — updating every 15 min')
+
+  // Ensure external_jobs table exists (safety net if drizzle-kit migrate skips it)
+  try {
+    await (db as any).execute(`
+      CREATE TABLE IF NOT EXISTS "external_jobs" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "external_id" text NOT NULL UNIQUE,
+        "title" varchar(255) NOT NULL,
+        "company" varchar(255) NOT NULL,
+        "company_logo" text,
+        "description" text NOT NULL,
+        "employment_type" varchar(50) DEFAULT 'permanent',
+        "city" varchar(100),
+        "state" varchar(100),
+        "country" varchar(10) DEFAULT 'BR',
+        "salary_min" real,
+        "salary_max" real,
+        "salary_currency" varchar(10) DEFAULT 'BRL',
+        "apply_url" text NOT NULL,
+        "source" varchar(50) DEFAULT 'jsearch' NOT NULL,
+        "keywords" text[],
+        "required_skills" text[],
+        "posted_at" timestamp,
+        "expires_at" timestamp,
+        "cached_at" timestamp DEFAULT now() NOT NULL
+      )
+    `)
+    console.log('[jobs] external_jobs table ready')
+  } catch (e) {
+    console.error('[jobs] table ensure error:', e)
+  }
+
+  // Start external jobs collection: immediately on boot, then every 4 hours
+  collectExternalJobs(db).catch((e) => console.error('[jobs] initial collect failed:', e))
+  setInterval(() => collectExternalJobs(db).catch((e) => console.error('[jobs] collect failed:', e)), 4 * 60 * 60 * 1000)
 } catch (err) {
   fastify.log.error(err)
   process.exit(1)

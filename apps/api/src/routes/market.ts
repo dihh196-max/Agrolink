@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { eq, desc, and, gte } from 'drizzle-orm'
 import { marketPrices, priceAlerts, offers, users } from '@agrolink/database'
+import { collectPrices } from '../lib/collect-prices.js'
 
 const cultureValues = [
   'soja',
@@ -18,6 +19,12 @@ const cultureValues = [
 
 export const marketRoutes: FastifyPluginAsync = async (fastify) => {
   const db = fastify.db
+
+  // Trigger immediate price refresh (admin/debug)
+  fastify.post('/market/prices/refresh', { onRequest: [fastify.authenticate] }, async (_req, reply) => {
+    collectPrices(db).catch(() => {})
+    return reply.code(202).send({ message: 'Coleta de preços iniciada' })
+  })
 
   // Latest prices for all cultures
   fastify.get('/market/prices', { onRequest: [fastify.authenticate] }, async () => {

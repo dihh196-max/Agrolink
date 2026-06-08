@@ -9,9 +9,19 @@ export interface User {
   name: string
   username: string
   avatarUrl?: string
+  coverUrl?: string
+  bio?: string
   role: UserRole
   verified: boolean
   premiumUntil?: string
+  city?: string
+  state?: string
+  occupation?: string
+  experienceYears?: string
+  cultures?: string
+  website?: string
+  instagram?: string
+  birthDate?: string
   createdAt: string
   updatedAt: string
 }
@@ -364,6 +374,30 @@ export interface JobApplication {
   message?: string
   status: JobApplicationStatus
   createdAt: string
+}
+
+export interface ExternalJob {
+  id: string
+  externalId: string
+  title: string
+  company: string
+  companyLogo?: string
+  description: string
+  employmentType?: string
+  city?: string
+  state?: string
+  country?: string
+  salaryMin?: number
+  salaryMax?: number
+  salaryCurrency?: string
+  applyUrl: string
+  source: string
+  keywords?: string[]
+  requiredSkills?: string[]
+  postedAt?: string
+  expiresAt?: string
+  cachedAt: string
+  distanceKm?: number
 }
 
 // ─── Marketplace ──────────────────────────────────────────────────────────────

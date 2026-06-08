@@ -4,7 +4,11 @@
     "appVersionSource": "local"
   },
   "build": {
+    "base": {
+      "node": "20.18.0"
+    },
     "development": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
       "android": {
@@ -15,18 +19,20 @@
       }
     },
     "preview": {
+      "extends": "base",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.2.21:3001/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://agrolink-production-17c8.up.railway.app/api/v1"
       }
     },
     "production": {
+      "extends": "base",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.agrolink.com/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://agrolink-production-17c8.up.railway.app/api/v1"
       }
     }
   },

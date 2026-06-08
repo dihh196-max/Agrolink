@@ -1,19 +1,29 @@
-FROM node:22-alpine AS base
+FROM node:22-alpine
 WORKDIR /app
 
-FROM base AS deps
-COPY package*.json ./
-RUN npm ci
+# ── Install deps (cache this layer separately) ───────────────────────────────
+COPY package.json package-lock.json ./
+COPY packages/types/package.json      ./packages/types/
+COPY packages/database/package.json   ./packages/database/
+COPY apps/api/package.json            ./apps/api/
 
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npm run build
+# Stubs so npm ci doesn't fail on missing workspace dirs
+RUN mkdir -p apps/web apps/mobile && \
+    printf '{"name":"@agrolink/web","private":true}' > apps/web/package.json && \
+    printf '{"name":"@agrolink/mobile","private":true}' > apps/mobile/package.json
 
-FROM base AS runner
+RUN npm ci --ignore-scripts
+
+# ── Copy source ───────────────────────────────────────────────────────────────
+COPY tsconfig.base.json ./
+COPY packages/types      ./packages/types
+COPY packages/database   ./packages/database
+COPY apps/api            ./apps/api
+
+# Compile @agrolink/database so its dist/index.js exists at runtime
+RUN cd packages/database && npx tsc -p tsconfig.json
+
 ENV NODE_ENV=production
-COPY --from=builder /app/dist ./dist
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json ./
 EXPOSE 3001
-CMD ["node", "dist/server.js"]
+
+CMD ["sh", "apps/api/start.sh"]

@@ -21,7 +21,8 @@ const productSchema = z.object({
   category: z.enum(CATEGORIES),
   price: z.number().positive(),
   unit: z.string().min(1).max(50),
-  images: z.array(z.string().url()).max(8).default([]),
+  // Accept any non-empty string (https URLs and data: URIs from mobile picker)
+  images: z.array(z.string().min(1)).max(8).default([]),
   stock: z.number().int().positive().optional(),
   city: z.string().min(2).max(100),
   state: z.string().length(2),
@@ -120,7 +121,7 @@ export const marketplaceRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Post a product
   fastify.post('/marketplace', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const userId = (request as any).user.id
+    const userId = request.user.sub
     const body = productSchema.parse(request.body)
 
     const [created] = await db.insert(marketplaceProducts).values({ ...body, userId }).returning()
@@ -130,7 +131,7 @@ export const marketplaceRoutes: FastifyPluginAsync = async (fastify) => {
 
   // My products
   fastify.get('/marketplace/mine', { onRequest: [fastify.authenticate] }, async (request) => {
-    const userId = (request as any).user.id
+    const userId = request.user.sub
     return db
       .select()
       .from(marketplaceProducts)
@@ -141,7 +142,7 @@ export const marketplaceRoutes: FastifyPluginAsync = async (fastify) => {
   // Toggle active
   fastify.patch('/marketplace/:id/toggle', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
-    const userId = (request as any).user.id
+    const userId = request.user.sub
 
     const [p] = await db
       .select()

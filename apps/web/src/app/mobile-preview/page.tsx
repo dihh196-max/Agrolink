@@ -98,47 +98,181 @@ function TabBar({ active }: { active: string }) {
   )
 }
 
-// ─── FEED SCREEN ───────────────────────────────────────────────────────────
+// ─── FEED SCREEN (com Stories + Vídeos Curtos) ────────────────────────────
 function FeedScreen() {
-  const posts = [
-    {
-      name: 'Ana Rodrigues', user: 'anaagronoma', initial: 'A', loc: 'Sorriso/MT',
-      content: 'Alerta fitossanitário: identificado foco de ferrugem asiática na região de Sorriso. Produtores devem monitorar as lavouras! 🚨',
-      tags: ['ferrugem', 'soja', 'alerta'], likes: 287, comments: 28,
-    },
-    {
-      name: 'João da Silva', user: 'joaosilva', initial: 'J', loc: 'Sorriso/MT',
-      content: 'Soja com ótimo desenvolvimento nessa safra! Expectativa de 65 sc/ha. Clima favorável. 🌱',
-      tags: ['soja', 'safra2526'], likes: 98, comments: 9,
-    },
+  const stories = [
+    { initial: '+', name: 'Seu story', mine: true },
+    { initial: 'A', name: 'Ana', dot: '#16a34a' },
+    { initial: 'J', name: 'João', dot: '#f5a623' },
+    { initial: 'P', name: 'Pedro', dot: '#16a34a' },
+    { initial: 'M', name: 'Maria', dot: null },
   ]
   return (
-    <div style={{ paddingBottom: 70 }}>
+    <div style={{ paddingBottom: 70, background: C.bg }}>
       <StatusBar />
-      <Header title="🌱 AgroLink" right="🔔" />
-      <div style={{ margin: 12, padding: 12, background: '#fff', borderRadius: 16, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8, color: C.textMuted, fontSize: 13 }}>
-        <span style={{ fontSize: 18 }}>➕</span> O que está acontecendo na sua lavoura?
-      </div>
-      {posts.map((p, i) => (
-        <div key={i} style={{ margin: '0 12px 10px', padding: 12, background: '#fff', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 20, background: C.primaryLight, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{p.initial}</div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.name}</div>
-              <div style={{ fontSize: 11, color: C.textMuted }}>@{p.user} • {p.loc}</div>
+      {/* Header */}
+      <div style={{ background: C.primary, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ color: '#fff', fontSize: 18, fontWeight: 800 }}>🌱 AgroLink</span>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <span style={{ color: '#fff', fontSize: 18 }}>🔍</span>
+          <span style={{ color: '#fff', fontSize: 18 }}>💬</span>
+          <div style={{ position: 'relative' }}>
+            <span style={{ color: '#fff', fontSize: 18 }}>🔔</span>
+            <div style={{ position: 'absolute', top: -4, right: -4, width: 14, height: 14, borderRadius: 7, background: C.secondary, border: '2px solid ' + C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 8, color: '#fff', fontWeight: 800 }}>3</span>
             </div>
           </div>
-          <div style={{ fontSize: 14, color: C.text, lineHeight: 1.5, marginBottom: 8 }}>{p.content}</div>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-            {p.tags.map((t) => <span key={t} style={{ fontSize: 11, color: C.primary, fontWeight: 600 }}>#{t}</span>)}
+        </div>
+      </div>
+
+      {/* Stories row */}
+      <div style={{ background: '#fff', borderBottom: `1px solid ${C.border}`, padding: '10px 0 10px 12px', display: 'flex', gap: 12, overflowX: 'auto' }}>
+        {stories.map((s, i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: 26,
+                background: s.mine ? C.bg : C.primaryLight,
+                border: s.mine ? `2px dashed ${C.primary}` : s.dot ? `2.5px solid ${s.dot}` : `2px solid ${C.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: s.mine ? C.primary : '#fff', fontSize: s.mine ? 22 : 18, fontWeight: 700,
+              }}>{s.initial}</div>
+              {s.dot && (
+                <div style={{ position: 'absolute', bottom: 1, right: 1, width: 12, height: 12, borderRadius: 6, background: s.dot, border: '2px solid #fff' }} />
+              )}
+            </div>
+            <span style={{ fontSize: 10, color: s.mine ? C.primary : C.text, fontWeight: s.mine ? 700 : 400 }}>{s.name}</span>
           </div>
-          <div style={{ display: 'flex', gap: 20, paddingTop: 8, borderTop: `1px solid ${C.border}`, fontSize: 13, color: C.textSec }}>
-            <span>❤️ {p.likes}</span>
-            <span>💬 {p.comments}</span>
-            <span>↗️</span>
+        ))}
+      </div>
+
+      {/* New post bar */}
+      <div style={{ margin: '8px 12px', padding: '10px 12px', background: '#fff', borderRadius: 14, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 16, background: C.primaryLight, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13 }}>V</div>
+        <span style={{ flex: 1, fontSize: 13, color: C.textMuted }}>O que está acontecendo na lavoura?</span>
+        <span style={{ fontSize: 18 }}>🎬</span>
+      </div>
+
+      {/* Post 1 — texto + imagem */}
+      <div style={{ margin: '0 12px 10px', background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px 6px' }}>
+          <div style={{ width: 38, height: 38, borderRadius: 19, background: C.primaryLight, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>A</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Ana Rodrigues <span style={{ color: C.primary }}>✓</span></div>
+            <div style={{ fontSize: 11, color: C.textMuted }}>@anaagronoma · Sorriso/MT</div>
+          </div>
+          <span style={{ fontSize: 16, color: C.textMuted }}>⋯</span>
+        </div>
+        <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5, padding: '0 12px 8px' }}>
+          🚨 Alerta: foco de ferrugem asiática identificado em Sorriso. Monitorem as lavouras!
+        </div>
+        {/* image placeholder */}
+        <div style={{ height: 140, background: 'linear-gradient(135deg,#2d8a42 0%,#8bc34a 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🌿</div>
+        <div style={{ display: 'flex', gap: 6, padding: '6px 12px 4px', flexWrap: 'wrap' }}>
+          {['ferrugem','soja','alerta'].map((t) => <span key={t} style={{ fontSize: 11, color: C.primary, fontWeight: 600 }}>#{t}</span>)}
+        </div>
+        <div style={{ display: 'flex', gap: 0, padding: '6px 4px', borderTop: `1px solid ${C.border}` }}>
+          {[['❤️','287'],['💬','28'],['↗️','']].map(([ic,ct],i) => (
+            <div key={i} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 12, color: C.textSec, padding: '4px 0' }}>
+              <span>{ic}</span>{ct && <span>{ct}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Post 2 — VÍDEO CURTO (AgroCurto) */}
+      <div style={{ margin: '0 12px 10px', background: '#0f1a0f', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', position: 'relative' }}>
+        {/* video thumbnail */}
+        <div style={{ height: 200, background: 'linear-gradient(160deg,#0f3d1c 0%,#2d8a42 60%,#8bc34a 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          <div style={{ fontSize: 44 }}>🌾</div>
+          {/* play button */}
+          <div style={{ position: 'absolute', width: 48, height: 48, borderRadius: 24, background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 20, marginLeft: 4 }}>▶</span>
+          </div>
+          {/* AgroCurto badge */}
+          <div style={{ position: 'absolute', top: 10, left: 10, background: C.secondary, color: '#fff', fontSize: 9, fontWeight: 800, padding: '3px 7px', borderRadius: 999 }}>🎬 AGROCURTO</div>
+          {/* duration */}
+          <div style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>0:52</div>
+          {/* progress bar */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.2)' }}>
+            <div style={{ width: '35%', height: '100%', background: C.secondary }} />
           </div>
         </div>
-      ))}
+        {/* overlay info */}
+        <div style={{ padding: '8px 12px 10px', background: '#0f1a0f' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 16, background: '#f5a623', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13 }}>J</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>João da Silva</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>Plantio direto safra 25/26 · Sorriso/MT</div>
+            </div>
+            <div style={{ background: C.primary, color: '#fff', fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 999 }}>+ Seguir</div>
+          </div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', lineHeight: 1.4 }}>
+            Regulagem da semeadora para soja — 5 ajustes que aumentaram 8 sc/ha na minha lavoura 🌱
+          </div>
+          <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+            {[['❤️','1,2k'],['💬','94'],['↗️','341']].map(([ic,ct],i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
+                <span>{ic}</span><span>{ct}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Post 3 — FOTO com legenda */}
+      <div style={{ margin: '0 12px 10px', background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px 6px' }}>
+          <div style={{ width: 38, height: 38, borderRadius: 19, background: '#b45309', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>M</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Maria Souza</div>
+            <div style={{ fontSize: 11, color: C.textMuted }}>@mariasouza · Lucas do Rio Verde/MT</div>
+          </div>
+          <span style={{ fontSize: 16, color: C.textMuted }}>⋯</span>
+        </div>
+        <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5, padding: '0 12px 8px' }}>
+          Colheita iniciada! Primeira talhão com média de 68 sc/ha. Orgulho da equipe 🚜🌾
+        </div>
+        {/* photo grid 1 grande + 2 pequenas */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gridTemplateRows: '80px 80px', gap: 2 }}>
+          <div style={{ gridRow: '1 / span 2', background: 'linear-gradient(135deg,#8bc34a,#558b2f)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>🚜</div>
+          <div style={{ background: 'linear-gradient(135deg,#f5a623,#e65100)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🌾</div>
+          <div style={{ background: 'linear-gradient(135deg,#2d8a42,#1a5c2a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, position: 'relative' }}>
+            <span>☀️</span>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 0 }}>
+              <span style={{ color: '#fff', fontSize: 13, fontWeight: 800 }}>+4</span>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, padding: '6px 12px 4px', flexWrap: 'wrap' }}>
+          {['colheita','soja','safra2526'].map((t) => <span key={t} style={{ fontSize: 11, color: C.primary, fontWeight: 600 }}>#{t}</span>)}
+        </div>
+        <div style={{ display: 'flex', gap: 0, padding: '6px 4px', borderTop: `1px solid ${C.border}` }}>
+          {[['❤️','521'],['💬','63'],['↗️','']].map(([ic,ct],i) => (
+            <div key={i} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 12, color: C.textSec, padding: '4px 0' }}>
+              <span>{ic}</span>{ct && <span>{ct}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Post 4 — patrocinado texto simples */}
+      <div style={{ margin: '0 12px 10px', padding: 12, background: '#fff', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 19, background: '#f5a623', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>P</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Pedro Alves</div>
+            <div style={{ fontSize: 11, color: C.textMuted }}>@pedroagro · Cuiabá/MT</div>
+          </div>
+          <div style={{ background: '#e6f4ea', color: C.primary, fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 6 }}>📌 Patrocinado</div>
+        </div>
+        <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5, marginBottom: 8 }}>Defensivos com 10% de desconto esta semana. Sementes certificadas para safra 25/26. 🌱</div>
+        <div style={{ display: 'flex', gap: 20, paddingTop: 8, borderTop: `1px solid ${C.border}`, fontSize: 12, color: C.textSec }}>
+          <span>❤️ 42</span><span>💬 7</span><span>↗️</span>
+        </div>
+      </div>
+
       <TabBar active="feed" />
     </div>
   )
@@ -498,6 +632,77 @@ function PostJobScreen() {
   )
 }
 
+// ─── AGROCURTO SCREEN (vídeo curto tela cheia, estilo Reels) ─────────────
+function AgroCurtoScreen() {
+  const videos = [
+    { bg: 'linear-gradient(170deg,#0f3d1c 0%,#2d8a42 55%,#8bc34a 100%)', emoji: '🌾', initial: 'J', name: 'João da Silva', loc: 'Sorriso/MT', caption: 'Regulagem da semeadora para soja — 5 ajustes que deram +8 sc/ha 🔧', tags: ['soja','plantio'], likes: '1,2k', comments: '94', shares: '341', duration: '0:52' },
+    { bg: 'linear-gradient(170deg,#1a237e 0%,#1565c0 55%,#42a5f5 100%)', emoji: '🚜', initial: 'M', name: 'Maria Souza', loc: 'Lucas/MT', caption: 'Pulverizador autopropelido na prática — cobertura de 180 ha por dia 💨', tags: ['defensivos','maquinário'], likes: '876', comments: '52', shares: '210', duration: '1:14' },
+  ]
+  const v = videos[0]
+  return (
+    <div style={{ height: '100%', background: '#000', position: 'relative', overflow: 'hidden' }}>
+      {/* video bg */}
+      <div style={{ position: 'absolute', inset: 0, background: v.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: 80, opacity: 0.3 }}>{v.emoji}</span>
+      </div>
+      {/* gradient overlay bottom */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)' }} />
+      {/* top bar */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '32px 14px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+        <span style={{ color: '#fff', fontSize: 16, fontWeight: 800, letterSpacing: 0.5 }}>🎬 AgroCurtos</span>
+        <span style={{ color: '#fff', fontSize: 20 }}>🔍</span>
+      </div>
+      {/* right actions */}
+      <div style={{ position: 'absolute', right: 12, bottom: 110, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, zIndex: 10 }}>
+        <div style={{ width: 46, height: 46, borderRadius: 23, border: '2.5px solid #f5a623', background: '#f5a623', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16 }}>{v.initial}</div>
+        {[['❤️', v.likes], ['💬', v.comments], ['↗️', v.shares], ['🔖', ''], ['⋯', '']].map(([ic, ct], i) => (
+          <div key={i} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 24 }}>{ic}</div>
+            {ct && <div style={{ color: '#fff', fontSize: 11, fontWeight: 700, marginTop: 2 }}>{ct}</div>}
+          </div>
+        ))}
+      </div>
+      {/* bottom info */}
+      <div style={{ position: 'absolute', bottom: 70, left: 12, right: 66, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 15, background: '#f5a623', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>{v.initial}</div>
+          <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{v.name}</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11 }}>· {v.loc}</span>
+          <div style={{ marginLeft: 'auto', background: C.primary, color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 999, border: '1px solid #fff' }}>+ Seguir</div>
+        </div>
+        <div style={{ color: '#fff', fontSize: 12, lineHeight: 1.5, marginBottom: 6 }}>{v.caption}</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {v.tags.map((t) => <span key={t} style={{ fontSize: 11, color: '#8bc34a', fontWeight: 700 }}>#{t}</span>)}
+        </div>
+        {/* progress + duration */}
+        <div style={{ marginTop: 8 }}>
+          <div style={{ height: 2, background: 'rgba(255,255,255,0.3)', borderRadius: 1 }}>
+            <div style={{ width: '38%', height: '100%', background: C.secondary, borderRadius: 1 }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+            <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10 }}>{v.duration}</span>
+          </div>
+        </div>
+      </div>
+      {/* swipe hint */}
+      <div style={{ position: 'absolute', bottom: 78, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
+        <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, textAlign: 'center' }}>↑ deslize para próximo</div>
+      </div>
+      {/* tab bar simulated */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 64, background: 'rgba(0,0,0,0.7)', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-around', alignItems: 'center', paddingBottom: 6 }}>
+        {[['🏠','Feed'],['🎬','AgroCurtos'],['✨','AgroIA'],['💼','Vagas'],['👤','Perfil']].map(([ic,lb],i) => (
+          <div key={i} style={{ textAlign: 'center', flex: 1 }}>
+            {i === 1
+              ? <div style={{ width: 38, height: 38, borderRadius: 19, background: C.secondary, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, marginBottom: 0 }}>{ic}</div>
+              : <div style={{ fontSize: 18, opacity: i === 1 ? 1 : 0.5 }}>{ic}</div>}
+            <div style={{ fontSize: 10, color: i === 1 ? C.secondary : 'rgba(255,255,255,0.5)', fontWeight: i === 1 ? 700 : 400 }}>{lb}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function MobilePreview() {
   return (
     <div style={{ minHeight: '100vh', background: '#e8ede8', padding: '40px 20px' }}>
@@ -507,6 +712,7 @@ export default function MobilePreview() {
       </div>
       <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
         <PhoneFrame title="Feed Social"><FeedScreen /></PhoneFrame>
+        <PhoneFrame title="AgroCurtos (vídeos curtos)"><AgroCurtoScreen /></PhoneFrame>
         <PhoneFrame title="Mercado / Cotações"><MarketScreen /></PhoneFrame>
         <PhoneFrame title="AgroIA (chat)"><AIScreen /></PhoneFrame>
       </div>

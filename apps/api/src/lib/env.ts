@@ -2,10 +2,10 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
-  REDIS_URL: z.string().url(),
+  REDIS_URL: z.string().url().optional(),
   JWT_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
-  ANTHROPIC_API_KEY: z.string().min(10),
+  ANTHROPIC_API_KEY: z.string().min(10).optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
   AWS_S3_BUCKET: z.string().default('agrolink-media'),

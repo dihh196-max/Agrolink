@@ -30,7 +30,52 @@ export function useReactToPost() {
   return useMutation({
     mutationFn: ({ postId, type }: { postId: string; type: string }) =>
       api.post(`/posts/${postId}/react`, { type }).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['feed'] }),
+
+    onMutate: async ({ postId, type }) => {
+      await qc.cancelQueries({ queryKey: ['feed'] })
+      await qc.cancelQueries({ queryKey: ['post', postId] })
+
+      const prevFeed = qc.getQueryData(['feed'])
+      const prevPost = qc.getQueryData(['post', postId])
+
+      const applyOptimistic = (post: Post) => {
+        const isToggle = post.userReaction === type
+        const newUserReaction = isToggle ? undefined : (type as any)
+        const counts = { ...(post.reactionsCount as any) }
+        if (post.userReaction) counts[post.userReaction] = Math.max(0, (counts[post.userReaction] ?? 0) - 1)
+        if (!isToggle) counts[type] = (counts[type] ?? 0) + 1
+        return { ...post, userReaction: newUserReaction, reactionsCount: counts }
+      }
+
+      qc.setQueryData(['feed'], (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.map((item: Post) =>
+              item.id === postId ? applyOptimistic(item) : item
+            ),
+          })),
+        }
+      })
+
+      qc.setQueryData(['post', postId], (old: Post | undefined) =>
+        old ? applyOptimistic(old) : old
+      )
+
+      return { prevFeed, prevPost }
+    },
+
+    onError: (_err, { postId }, ctx: any) => {
+      if (ctx?.prevFeed) qc.setQueryData(['feed'], ctx.prevFeed)
+      if (ctx?.prevPost) qc.setQueryData(['post', postId], ctx.prevPost)
+    },
+
+    onSettled: (_data, _err, { postId }) => {
+      qc.invalidateQueries({ queryKey: ['feed'] })
+      qc.invalidateQueries({ queryKey: ['post', postId] })
+    },
   })
 }
 
@@ -49,4 +94,3 @@ export function useAddComment(postId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['posts', postId, 'comments'] }),
   })
 }
-
